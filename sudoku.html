@@ -42,12 +42,81 @@
             border-top: 2px solid black;
             margin: 20px 0;
     	   }
+	blockquote {
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+	.responsive-image {
+		
+	    max-width: 600px;
+	    height: auto;
+	}
+	.rules-text {
+	    font-size: 14px;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            max-width: 800px;
+            text-align: justify;
+            padding: 0 1rem;
+	}
+
     </style>
 
 </head>
 
 <body>
+	<p>I will use this page to show my sudoku puzzle creation, but not all of them. I will upload only the one with backstory on it, or at least the one I'm really proud of. Every sudokus are available with online solving on Penpa+ which you can click on the title.</p>
+	<p>Although I like sudoku, I don't set it that much. I mostly made it for easy and fun solve without challenging technique, so I tried to make the layout as beauty as possible or make novelty based theme that could be absurd without knowing the context, neglecting the solving path for a bit. I posted sudoku mainly on my Facebook account because that's the place where my friends usually interested in sudoku, so I believe it'll be hard to find my sudokus since they already buried deep down by the shitpostings.</p>
+	<p>I also think there's a lot of amazing setter already who create beautiful sudoku, so I'm not really interested to be stand out at setting sudoku. Puzzle portal of <a href="https://logic-masters.de/Raetselportal/">LMD</a> is the proof (even though that's not a sudoku only portal).</p>
+		<blockquote>
+        		<p class="rules-text"><strong>Classic Sudoku Rules:</strong> Place 1-9 into the grid such that no row, column, and 3x3 boldlined area contain repeated digit.</p>
+		</blockquote>
+	<hr>
+	<h1><a href="https://tinyurl.com/229jmy7u">Clock Sudoku</a> - 2023/08/16</h1>
+			<img src="./Image/Sudoku/Clock_Sudoku.png" class="responsive-image">
+		<blockquote>
+        		<p class="rules-text"><strong>Rules:</strong> Classic Sudoku rules applied. Additionally, some cells are contained on digital clock. Number on digital clock must follow 24-hours HH:MM format. For example, 23:45 is valid, but not with 32:45.</p>
+		</blockquote>
+	<p>Clock Sudoku is interesting if made right, but I think I haven't seen this variant that much on the internet. So, I made this easy one.</p>
+	<h1><a href="https://tinyurl.com/2cg2bsqr">Miracle Overlapping Sudoku</a> - 2023/08/08</h1>
+			<img src="./Image/Sudoku/Miracle_Overlapping_Sudoku.png" class="responsive-image">
+		<blockquote>
+        		<p class="rules-text"><strong>Rules:</strong> This sudoku was made from four overlapped 9x9 size sudoku, in which Classic Sudoku rules applied for all of them respectively. Additionally, cells connected by knight move in chess must not contain same digit, cells connected by king move in chess must not contain same digit, and every cells that share an edge must not contain consecutive number.</p>
+		</blockquote>
+	<p>I made this sudoku for small online "Makhluk" contests beside the Cipher Tapa. The idea is straightforward. I want to make the clues as few as possible without creating too much distraction by constraint drawing, so I choose Antiknight, Antiking, and Non-consecutive variant (Some place refer those variant combination as Miracle, so I follow them. I'm not sure if that's correct though, since I also recall the miracle variant as additional magic square on the sudoku).</p>
+	<p>This sudoku is pretty annoying because you need a lot of bifurcation, unless you want to confidently create some theorem and fill the grid by them. However, since I also aim this sudoku to be solved on one full day, I finally decided to make it like that.</p>
+	<h1><a href="https://tinyurl.com/2aqacpng">Killer Extra Region Sudoku</a> - 2023/07/12</h1>
+			<img src="./Image/Sudoku/Killer_Extra_Region_Sudoku.png" class="responsive-image">
+		<blockquote>
+        		<p class="rules-text"><strong>Rules:</strong> Classic Sudoku rules applied. Additionally, every red lines must contain non repeating 1-9 digits. Number on a cage indicates the sum of the digits contained in that cage. Cage cannot contain same digit.</p>
+		</blockquote>
+	<p>I made this sudoku after I heard a clash conversation about translating π into pi or phi. The right one for Indonesian translation is pi, so I jokingly made π, the wrong translation phi, and π number into one layout. The killers are just to make them solvable.</p>
+	<h1><a href="https://tinyurl.com/2y3mhjee">Holodoku</a> - 2023/04/01</h1>
+			<img src="./Image/Sudoku/Holodoku.png" class="responsive-image">
+		<blockquote>
+        		<p class="rules-text"><strong>Rules:</strong> Classic Sudoku rules applied. Additionally, digit along thermometer must strictly increasing from bulb to end. However, the digits are changed to Hololive ID talent avatar which are to determine by solver. Note that to trigger the solution checker on Penpa+, you only need to input the digit into grid just like usual sudoku.</p>
+		</blockquote>
+	<p>Just like the name show, this sudoku is dedicated to Hololive ID, which is one of the biggest vtuber branch in Indonesia. The idea appears when one of the talent playing sudoku. I mean, how common is it for a vtuber stream-playing sudoku?</p>
+	<p>Anyway, this is actually a simple thermometer sudoku. I only substitute the number with ID's avatar. Small searching required to know what number is who, but it's just like a filler. You can treat it like normal thermometer sudoku afterward.</p>
+	<h1><a href="https://tinyurl.com/2y46lu7l">Thermometer Sudoku</a> - 2022/07/20</h1>
+			<img src="./Image/Sudoku/Thermometer_Sudoku.png" class="responsive-image">
+		<blockquote>
+        		<p class="rules-text"><strong>Rules:</strong> Classic Sudoku rules applied. Additionally, digit along thermometer must strictly increasing from bulb to end.</p>
+		</blockquote>
+	<p>No background story. Just simple sudoku I made. You may found it very easy if already too familiar with sudoku though.</p>
 
-	<p>Under Construction</p>
+	<h1><a href="https://tinyurl.com/24b5rt68">Killer Sudoku</a> - 2022/01/28</h1>
+			<img src="./Image/Sudoku/Killer_Sudoku.png" class="responsive-image">
+		<blockquote>
+        		<p class="rules-text"><strong>Rules:</strong> Classic Sudoku rules applied. Additionally, number on cage indicates the sum of all digits contained in that cage. Cage cannot contain repeated digit.</p>
+		</blockquote>
+	<p>This is a joke referenced to the story of Mr. Alexander Grothendieck, who mistakenly 57 as prime number. I think it's just funny to make all cages sum to prime number, while 57 is also there, but not in cage. I was thinking about the "Let me in, let meeeee iiiiiiiinnnnnnnn" meme at that time.</p>
+	<h1><a href="https://tinyurl.com/26njnrl3">Thermometer Little Killer Sudoku</a> - 2021/05/09</h1>
+			<img src="./Image/Sudoku/Thermometer_Little_Killer_Sudoku.png" class="responsive-image">
+		<blockquote>
+        		<p class="rules-text"><strong>Rules:</strong> Classic Sudoku rules applied. Additionally, digit along the thermometer should strictly increasing from bulb to end. Number outside the grid indicate the sum of digits along the shown direction.</p>
+		</blockquote>
+	<p>This is a dedicated puzzle to one of my lecturer who has Youtube Channel. His channel is growing and I love how he streamed various activity, including solving sudoku and the non-pencil and paper Minesweeper (well, at least at that time). So, I made this one, even though I believe it never reaches him.</p>
+	<p><a href="landing_page.html">MAIN PAGE</a></p>
 </body>
 </html>
