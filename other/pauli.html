@@ -243,9 +243,9 @@
     chartInstance = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: Array.from({ length: 20 }, (_, i) => `Period ${i + 1}`),
+        labels: Array.from({ length: 20 }, (_, i) => `Periode ${i + 1}`),
         datasets: [{
-          label: 'Calculations per Period',
+          label: 'Total Perhitungan',
           data: results.map(r => r.calculations),
           borderColor: 'blue',
           backgroundColor: 'rgba(0, 0, 255, 0.1)',
