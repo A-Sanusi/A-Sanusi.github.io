@@ -21,17 +21,22 @@
 </head>
 <body>
 
-<h2>Pauly Test Examiner</h2>
+<h2>Periksa Tes Pauli</h2>
+  <p>Petunjuk penulisan:</p>
+  <p>1. Isi kotak dengan jawaban peserta</p>
+  <p>2. Jika peserta membetulkan jawaban, tulis jawaban peserta dengan tambahan huruf x, contoh: 3x</p>
+  <p>3. Jika peserta menandai akhir periode (setelah 3 menit), tulis jawaban peserta terakhir dengan tambahan huruf g, contoh: 4g</p>
+  <p>4. Jika peserta membetulkan jawaban dan menandai akhir periode di tempat yang sama, tulis jawaban dengan tambahan huruf xg, contoh: 9xg</p>
 
 <div id="table-container"></div>
 
 <div class="controls">
-  <button onclick="prevPage()">Previous Page</button>
+  <button onclick="prevPage()">Halaman Sebelumnya</button>
   <span id="page-number">Page 1</span>
-  <button onclick="nextPage()">Next Page</button>
+  <button onclick="nextPage()">Halaman Berikutnya</button>
 </div>
 
-<button onclick="analyze()">Analyze Results</button>
+<button onclick="analyze()">Periksa</button>
 
 <div id="output"></div>
 
@@ -163,11 +168,11 @@
     resultTable.innerHTML = `
       <thead>
         <tr>
-          <th>Period</th>
-          <th>Calculations</th>
-          <th>Correct</th>
-          <th>Incorrect</th>
-          <th>Corrections</th>
+          <th>Periode</th>
+          <th>Total Perhitungan</th>
+          <th>Benar</th>
+          <th>Salah</th>
+          <th>Pembetulan</th>
         </tr>
       </thead>
       <tbody>
@@ -201,12 +206,12 @@
       const segTable = document.createElement("table");
       segTable.innerHTML = `
         <thead>
-          <tr><th colspan="5">Segment ${i + 1}</th></tr>
+          <tr><th colspan="5">Segmen ${i + 1}</th></tr>
           <tr>
-            <th>Total Calculations</th>
-            <th>Correct</th>
-            <th>Incorrect</th>
-            <th>Corrections</th>
+            <th>Total Perhitungan</th>
+            <th>Benar</th>
+            <th>Salah</th>
+            <th>Pembetulan</th>
           </tr>
         </thead>
         <tbody>
