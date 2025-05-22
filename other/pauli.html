@@ -162,7 +162,7 @@
 
     for (let i = 0; i < 20; i++) {
       const r = results[i];
-      summary += `Period ${i + 1}:\n  Calculations: ${r.calculations}\n  Right: ${r.correct}\n  Wrong: ${r.incorrect}\n  Corrections: ${r.corrections}\n\n`;
+      summary += `Waktu ${i + 1}:\n  Banyak pengerjaan: ${r.calculations}\n  Benar: ${r.correct}\n  Salah: ${r.incorrect}\n  Pembetulan: ${r.corrections}\n\n`;
       calcChartData.push(r.calculations);
     }
 
@@ -178,7 +178,7 @@
         incorrect: a.incorrect + b.incorrect,
         corrections: a.corrections + b.corrections
       }), { calculations: 0, correct: 0, incorrect: 0, corrections: 0 });
-      summary += `Segment ${i + 1}:\n  Calculations: ${totals.calculations}\n  Right: ${totals.correct}\n  Wrong: ${totals.incorrect}\n  Corrections: ${totals.corrections}\n\n`;
+      summary += `Segmen ${i + 1}:\n  Banyak pengerjaan: ${totals.calculations}\n  Benar: ${totals.correct}\n  Salah: ${totals.incorrect}\n  Pembetulan: ${totals.corrections}\n\n`;
     });
 
     output.textContent = summary;
