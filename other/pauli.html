@@ -32,7 +32,8 @@
     <li>Tekan tombol "Periksa" untuk melihat hasil analisis.</li>
   </ul>
 </div>
-  <div id="table-container"></div>
+
+<div id="table-container"></div>
 
 <div class="controls">
   <button onclick="prevPage()">Halaman Sebelumnya</button>
@@ -56,6 +57,7 @@
   let currentPage = 0;
   let correctAnswers = [];
   let results = Array.from({ length: 20 }, () => ({ calculations: 0, correct: 0, incorrect: 0, corrections: 0 }));
+  let chartInstance = null; // ✅ Chart instance variable
 
   const tableContainer = document.getElementById("table-container");
 
@@ -102,7 +104,7 @@
   }
 
   function updatePageNumber() {
-    document.getElementById("page-number").textContent = `Page ${currentPage + 1}`;
+    document.getElementById("page-number").textContent = `Halaman ${currentPage + 1}`;
   }
 
   function prevPage() {
@@ -231,7 +233,14 @@
     });
 
     const ctx = document.getElementById('calculation-chart').getContext('2d');
-    new Chart(ctx, {
+
+    // Destroy existing chart if present
+    if (chartInstance !== null) {
+      chartInstance.destroy();
+    }
+
+    // Create new chart
+    chartInstance = new Chart(ctx, {
       type: 'line',
       data: {
         labels: Array.from({ length: 20 }, (_, i) => `Period ${i + 1}`),
