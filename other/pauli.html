@@ -1,298 +1,686 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Periksa Tes Pauli</title>
-  <style>
-    body { font-family: Arial, sans-serif; }
-    table { border-collapse: collapse; margin-bottom: 10px; width: 100%; }
-    th, td { border: 1px solid #ccc; text-align: center; padding: 4px; }
-    input[type="text"] { width: 40px; height: 25px; border: none; text-align: center; font-size: 14px; }
-    input:focus { outline: none; background-color: #e0f7fa; }
-    .row-header, .col-header { background-color: #f0f0f0; font-weight: bold; }
-    .page { display: none; }
-    .page.active { display: table; }
-    .controls { margin-bottom: 10px; }
-    #output { background: #f9f9f9; padding: 10px; border: 1px solid #ccc; max-height: 600px; overflow-y: auto; }
-    #chart-container { width: 100%; max-width: 900px; height: 400px; margin-top: 20px; }
-    h4 { margin-top: 20px; }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8" />
+    <title>Periksa Tes Pauli</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { border-collapse: collapse; margin-bottom: 10px; width: 100%; }
+        th, td { border: 1px solid #ccc; text-align: center; padding: 4px; }
+        input[type="text"] { width: 40px; height: 25px; border: none; text-align: center; font-size: 14px; }
+        input:focus { outline: none; background-color: #e0f7fa; }
+        .row-header, .col-header { background-color: #f0f0f0; font-weight: bold; }
+        .page { display: none; }
+        .page.active { display: table; }
+        .controls { margin-bottom: 10px; }
+        #output { background: #f9f9f9; padding: 10px; border: 1px solid #ccc; max-height: 600px; overflow-y: auto; }
+        #chart-container { width: 100%; max-width: 900px; height: 400px; margin-top: 20px; }
+        h4 { margin-top: 20px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
-<h2>Periksa Tes Pauli</h2>
-<div id="rules">
-  <h4>Aturan Pengisian:</h4>
-  <ul>
-    <li>Masukkan angka satu digit di setiap kotak.</li>
-    <li>Tulis 'G' untuk menandai garis pada kotak terakhir pengisian peserta. Contoh: 3G</li>
-    <li>Tulis 'X' untuk menunjukkan pembetulan. Contoh 4x</li>
-    <li>Tulis 'GX' untuk menandai pembetulan sekaligus kotak terakhir pengisian peserta. Contoh: 5GX</li>
-    <li>Tekan tombol "Periksa" untuk melihat hasil analisis.</li>
-  </ul>
-</div>
+    <h2>Periksa Tes Pauli</h2>
+    <div id="rules">
+        <h4>Aturan Pengisian:</h4>
+        <ul>
+            <li>Masukkan angka satu digit di setiap kotak.</li>
+            <li>Tulis 'G' untuk menandai garis pada kotak terakhir pengisian peserta. Contoh: 3G</li>
+            <li>Tulis 'X' untuk menunjukkan pembetulan. Contoh: 4X</li>
+            <li>Tulis 'GX' untuk menandai pembetulan sekaligus kotak terakhir pengisian peserta. Contoh: 5GX</li>
+            <li>Tekan tombol "Periksa" untuk melihat hasil analisis.</li>
+        </ul>
+    </div>
 
-<div id="table-container"></div>
+    <div class="controls" style="display: flex; flex-direction: column; gap: 10px; max-width: 600px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label for="respondent-id">Nomor Urut:</label>
+            <input type="number" id="respondent-id" placeholder="ID" min="1"
+              style="width: 100%; max-width: 300px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-align: left;" />
+        </div>
 
-<div class="controls">
-  <button onclick="prevPage()">Halaman Sebelumnya</button>
-  <span id="page-number">Halaman 1</span>
-  <button onclick="nextPage()">Halaman Berikutnya</button>
-</div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label for="respondent-name">Nama Peserta:</label>
+            <input type="text" id="respondent-name" placeholder="Nama Peserta"
+              style="width: 100%; max-width: 300px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-align: left;" />
+        </div>
 
-<button onclick="analyze()">Periksa</button>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label for="respondent-class">Kelas:</label>
+            <input type="text" id="respondent-class" placeholder="Kelas"
+              style="width: 100%; max-width: 300px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-align: left;" />
+        </div>
 
-<div id="output"></div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label for="respondent-birth">Tempat, Tanggal Lahir:</label>
+            <input type="text" id="respondent-birth" placeholder="Tempat, Tanggal Lahir"
+              style="width: 100%; max-width: 300px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-align: left;" />
+        </div>
 
-<div id="chart-container">
-  <canvas id="calculation-chart"></canvas>
-</div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label for="respondent-gender">Jenis Kelamin:</label>
+            <input type="text" id="respondent-gender" placeholder="Jenis Kelamin"
+              style="width: 100%; max-width: 300px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-align: left;" />
+        </div>
+    </div>
+    
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; margin-bottom: 10px;">
+        <button onclick="saveCurrentInput()">Save</button>
+	<button onclick="downloadChartImage()">Download Grafik</button>        
+	<button onclick="exportAllResults()">Download Seluruh Hasil</button>
+    </div>
 
-<script>
-  const ROWS = 50;
-  const COLUMNS = 160;
-  const COLUMNS_PER_PAGE = 30;
-  const TOTAL_PAGES = Math.ceil(COLUMNS / COLUMNS_PER_PAGE);
-  let currentPage = 0;
-  let correctAnswers = [];
-  let results = Array.from({ length: 20 }, () => ({ calculations: 0, correct: 0, incorrect: 0, corrections: 0 }));
-  let chartInstance = null; // Chart instance variable
+    <div style="margin-bottom: 10px;">
+	<button onclick="exportAllSavedIDs()">Download JSON</button>
+    </div>
+    <div style="margin-bottom: 10px;">
+	<label for="importFile" class="btn">IMPORT JSON</label>
+        	<input type="file" id="importFile" accept=".json" />
+    </div>
+    
+    <div id="table-container"></div>
 
-  const tableContainer = document.getElementById("table-container");
+    <div class="controls">
+        <button onclick="prevPage()">Halaman Sebelumnya</button>
+        <span id="page-number">Halaman 1</span>
+        <button onclick="nextPage()">Halaman Berikutnya</button>
+    </div>
 
-  for (let page = 0; page < TOTAL_PAGES; page++) {
-    const table = document.createElement("table");
-    table.classList.add("page");
-    if (page === 0) table.classList.add("active");
-    table.id = `page-${page}`;
+    <button onclick="analyze()">Periksa</button>
 
-    const header = document.createElement("tr");
-    header.appendChild(document.createElement("th"));
-    for (let c = 0; c < COLUMNS_PER_PAGE; c++) {
-      const th = document.createElement("th");
-      th.textContent = page * COLUMNS_PER_PAGE + c + 1;
-      th.classList.add("col-header");
-      header.appendChild(th);
-    }
-    table.appendChild(header);
+    <div id="output"></div>
+    <div id="chart-container"><canvas id="calculation-chart"></canvas>
+    </div>
 
-    for (let r = 0; r < ROWS; r++) {
-      const row = document.createElement("tr");
-      const th = document.createElement("td");
-      th.textContent = r + 1;
-      th.classList.add("row-header");
-      row.appendChild(th);
+    <script>
+        const ROWS = 50, COLUMNS = 160, COLUMNS_PER_PAGE = 30;
+        const TOTAL_PAGES = Math.ceil(COLUMNS / COLUMNS_PER_PAGE);
+        let currentPage = 0;
+        let correctAnswers = []; // Store data dari pauliz.csv
+        let results = Array.from({ length: 20 }, () => ({ calculations: 0, correct: 0, incorrect: 0, corrections: 0 }));
+        let chartInstance = null;
 
-      for (let c = 0; c < COLUMNS_PER_PAGE; c++) {
-        const colIndex = page * COLUMNS_PER_PAGE + c;
-        if (colIndex >= COLUMNS) break;
+        const respondentIdInput = document.getElementById("respondent-id");
 
-        const td = document.createElement("td");
-        const input = document.createElement("input");
-        input.type = "text";
-        input.dataset.row = r;
-        input.dataset.col = colIndex;
-        td.appendChild(input);
-        row.appendChild(td);
-      }
+        const tableContainer = document.getElementById("table-container");
 
-      table.appendChild(row);
-    }
+        for (let page = 0; page < TOTAL_PAGES; page++) {
+            const table = document.createElement("table");
+            table.classList.add("page", ...(page === 0 ? ["active"] : []));
+            table.id = `page-${page}`;
 
-    tableContainer.appendChild(table);
-  }
+            const header = document.createElement("tr");
+            header.appendChild(document.createElement("th"));
+            for (let c = 0; c < COLUMNS_PER_PAGE; c++) {
+                const th = document.createElement("th");
+                th.textContent = page * COLUMNS_PER_PAGE + c + 1;
+                th.classList.add("col-header");
+                header.appendChild(th);
+            }
+            table.appendChild(header);
 
-  function updatePageNumber() {
-    document.getElementById("page-number").textContent = `Halaman ${currentPage + 1}`;
-  }
+            for (let r = 0; r < ROWS; r++) {
+                const row = document.createElement("tr");
+                const th = document.createElement("td");
+                th.textContent = r + 1;
+                th.classList.add("row-header");
+                row.appendChild(th);
 
-  function prevPage() {
-    if (currentPage > 0) {
-      document.getElementById(`page-${currentPage}`).classList.remove("active");
-      currentPage--;
-      document.getElementById(`page-${currentPage}`).classList.add("active");
-      updatePageNumber();
-    }
-  }
+                for (let c = 0; c < COLUMNS_PER_PAGE; c++) {
+                    const colIndex = page * COLUMNS_PER_PAGE + c;
+                    if (colIndex >= COLUMNS) break;
 
-  function nextPage() {
-    if (currentPage < TOTAL_PAGES - 1) {
-      document.getElementById(`page-${currentPage}`).classList.remove("active");
-      currentPage++;
-      document.getElementById(`page-${currentPage}`).classList.add("active");
-      updatePageNumber();
-    }
-  }
+                    const td = document.createElement("td");
+                    const input = document.createElement("input");
+                    input.type = "text";
+                    input.dataset.row = r;
+                    input.dataset.col = colIndex;
+                    input.setAttribute('maxlength', '2'); 
+                    td.appendChild(input);
+                    row.appendChild(td);
+                }
+                table.appendChild(row);
+            }
+            tableContainer.appendChild(table);
+        }
 
-  window.addEventListener("DOMContentLoaded", () => {
-    fetch("pauliz.csv")
-      .then(res => res.text())
-      .then(csv => {
-        const lines = csv.trim().split("\n");
-        correctAnswers = lines.map(line => line.split(",").map(cell => cell.trim()));
-        console.log("CSV loaded", correctAnswers);
-      })
-      .catch(err => console.error("CSV load failed:", err));
-  });
+        function loadRespondentData(respondentId) {
+            document.querySelectorAll("input[data-row][data-col]").forEach(input => {
+                input.value = "";
+            });
 
-  function analyze() {
+            document.getElementById("respondent-name").value = "";
+            document.getElementById("respondent-class").value = "";
+            document.getElementById("respondent-birth").value = "";
+            document.getElementById("respondent-gender").value = "";
+
+            const data = JSON.parse(localStorage.getItem(`responden-${respondentId}`));
+
+            if (data) {
+                for (const key in data) {
+                    if (key.includes(',')) {const [row, col] = key.split(",");
+                        const input = document.querySelector(`input[data-row="${row}"][data-col="${col}"]`);
+                        if (input) input.value = data[key];
+                    }
+                }
+
+                if (data.meta) {
+                    document.getElementById("respondent-name").value = data.meta.name || "";
+                    document.getElementById("respondent-class").value = data.meta.class || "";
+                    document.getElementById("respondent-birth").value = data.meta.birth || "";
+                    document.getElementById("respondent-gender").value = data.meta.gender || "";
+                    }
+            }
+        }
+
+        respondentIdInput.addEventListener("input", function () {
+            const respondentId = this.value.trim();
+            if (respondentId) {
+                clearTimeout(this._loadTimeout);
+                this._loadTimeout = setTimeout(() => {
+                    loadRespondentData(respondentId);
+                }, 300);
+            } else {
+                document.querySelectorAll("input[data-row][data-col]").forEach(input => {
+                    input.value = "";
+                });
+                document.getElementById("respondent-name").value = "";
+                document.getElementById("respondent-class").value = "";
+                document.getElementById("respondent-birth").value = "";
+                document.getElementById("respondent-gender").value = "";
+            }
+        });
+
+        respondentIdInput.addEventListener("keydown", function (e) {
+            let currentValue = parseInt(this.value) || 0;
+
+            if (e.key === "ArrowUp") {
+                e.preventDefault();
+                this.value = currentValue + 1;
+                this.dispatchEvent(new Event("input"));
+            } else if (e.key === "ArrowDown") {
+                e.preventDefault(); 
+                this.value = Math.max(currentValue - 1, 1); 
+                this.dispatchEvent(new Event("input")); 
+            }
+        });
+
+        function updatePageNumber() {
+            document.getElementById("page-number").textContent = `Halaman ${currentPage + 1}`;
+        }
+
+        function prevPage() {
+            if (currentPage > 0) {
+                document.getElementById(`page-${currentPage}`).classList.remove("active");
+                currentPage--;
+                document.getElementById(`page-${currentPage}`).classList.add("active");
+                updatePageNumber();
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < TOTAL_PAGES - 1) {
+                document.getElementById(`page-${currentPage}`).classList.remove("active");
+                currentPage++;
+                document.getElementById(`page-${currentPage}`).classList.add("active");
+                updatePageNumber();
+            }
+        }
+
+        let analysisSummary = {
+            detailed: [],
+            phases: {
+                initial: { calculations: 0, correct: 0, incorrect: 0, corrections: 0 },
+                working: { calculations: 0, correct: 0, incorrect: 0, corrections: 0 },
+                fatigue: { calculations: 0, correct: 0, incorrect: 0, corrections: 0 }
+            }
+        };
+
+function analyze() {
     results = Array.from({ length: 20 }, () => ({ calculations: 0, correct: 0, incorrect: 0, corrections: 0 }));
     let period = 0;
 
     for (let col = 0; col < COLUMNS; col++) {
-      for (let row = 0; row < ROWS; row++) {
-        const input = document.querySelector(`input[data-row="${row}"][data-col="${col}"]`);
-        const value = input?.value.trim().toUpperCase();
-        if (!value) continue;
+        for (let row = 0; row < ROWS; row++) {
+            if (period >= results.length) {
+                break;
+            }
 
-        const digit = value[0];
-        const isCorrection = value.includes("X");
-        const hasG = value.includes("G");
+            const input = document.querySelector(`input[data-row="${row}"][data-col="${col}"]`);
+            const value = input?.value.trim().toUpperCase();
 
-        results[period].calculations++;
+            if (!value) {continue;}
 
-        const correct = correctAnswers[row][col];
-        const isCorrect = digit === correct;
+            const digit = value[0];
+            const isCorrection = value.includes("X");
+            const hasG = value.includes("G");
 
-        if (isCorrection) {
-          if (isCorrect) results[period].corrections++;
-          else results[period].incorrect++;
-        } else {
-          if (isCorrect) results[period].correct++;
-          else results[period].incorrect++;
+            results[period].calculations++;
+
+            const correct = correctAnswers?.[row]?.[col];
+            const isCorrect = digit === correct;
+
+            if (isCorrection) {
+                  if (isCorrect) {
+                    results[period].corrections++;
+                } else {
+                    results[period].incorrect++; 
+                }
+            } else {
+                if (isCorrect) {
+                    results[period].correct++;
+                } else {
+                    results[period].incorrect++;
+                }
+            }
+
+            if (hasG) {
+                period++; 
+            }
         }
-
-        if (hasG && period < 19) period++;
-      }
     }
 
     const output = document.getElementById("output");
     output.innerHTML = "";
 
     const resultTable = document.createElement("table");
-    resultTable.innerHTML = `
-      <thead>
-        <tr>
-          <th>Periode</th>
-          <th>Total Perhitungan</th>
-          <th>Benar</th>
-          <th>Salah</th>
-          <th>Pembetulan</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${results.map((r, i) => `
-          <tr>
-            <td>${i + 1}</td>
-            <td>${r.calculations}</td>
-            <td>${r.correct}</td>
-            <td>${r.incorrect}</td>
-            <td>${r.corrections}</td>
-          </tr>
-        `).join("")}
-      </tbody>
-    `;
+    resultTable.innerHTML = `<thead><tr>
+        <th>Periode</th><th>Total</th><th>Benar</th><th>Salah</th><th>Pembetulan</th>
+    </tr></thead><tbody>${results.map((r, i) => `
+        <tr><td>${i + 1}</td><td>${r.calculations}</td><td>${r.correct}</td><td>${r.incorrect}</td><td>${r.corrections}</td></tr>`).join("")}
+    </tbody>`;
     output.appendChild(resultTable);
 
-    const seg = [
-      results.slice(0, 4),
-      results.slice(5, 16),
-      results.slice(16, 19)
-    ];
+    const initialPhase = { calculations: 0, correct: 0, incorrect: 0, corrections: 0 };
+    const workingPhase = { calculations: 0, correct: 0, incorrect: 0, corrections: 0 };
+    const fatiguePhase = { calculations: 0, correct: 0, incorrect: 0, corrections: 0 };
 
-    seg.forEach((s, i) => {
-      const totals = s.reduce((a, b) => ({
-        calculations: a.calculations + b.calculations,
-        correct: a.correct + b.correct,
-        incorrect: a.incorrect + b.incorrect,
-        corrections: a.corrections + b.corrections
-      }), { calculations: 0, correct: 0, incorrect: 0, corrections: 0 });
+    for (let i = 0; i < 5; i++) accumulatePhase(initialPhase, results[i]);
+    for (let i = 5; i < 17; i++) accumulatePhase(workingPhase, results[i]);
+    for (let i = 17; i < 20; i++) accumulatePhase(fatiguePhase, results[i]);
 
-    let SegmentName = "";
-	    switch(i) {
-	       case 0:
-		SegmentName ="Initial Phase (Periode 1-5)";
-		break;
-	       case 1:
-		SegmentName ="Working Phase (Periode 6-17)";
-		break;
-	       case 2:
-		SegmentName ="Fatigue Phase (Periode 18-20)";
-		break;
-	       default:
-		SegmentName ="";
-		break;
-	    }
-      const segTable = document.createElement("table");
-      segTable.innerHTML = `
-        <thead>
-          <tr><th colspan="5">${SegmentName} </th></tr>
-          <tr>
-            <th>Total Perhitungan</th>
-            <th>Benar</th>
-            <th>Salah</th>
-            <th>Pembetulan</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>${totals.calculations}</td>
-            <td>${totals.correct}</td>
-            <td>${totals.incorrect}</td>
-            <td>${totals.corrections}</td>
-          </tr>
-        </tbody>
-      `;
-      output.appendChild(segTable);
-    });
+    renderPhaseTable("Initial Phase (Periode 1-5)", initialPhase, output);
+    renderPhaseTable("Working Phase (Periode 6-17)", workingPhase, output);
+    renderPhaseTable("Fatigue Phase (Periode 18-20)", fatiguePhase, output);
 
-    const ctx = document.getElementById('calculation-chart').getContext('2d');
-
-    // Destroy existing chart if present
-    if (chartInstance !== null) {
-      chartInstance.destroy();
-    }
-
-    // Create new chart
-    chartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: Array.from({ length: 20 }, (_, i) => `Periode ${i + 1}`),
-        datasets: [{
-          label: 'Total Perhitungan',
-          data: results.map(r => r.calculations),
-          borderColor: 'blue',
-          backgroundColor: 'rgba(0, 0, 255, 0.1)',
-          tension: 0.2,
-          fill: true
-        }]
-      },
-      options: {
-        scales: {
-          y: { beginAtZero: true }
+    analysisSummary = {
+        detailed: results,
+        phases: {
+            initial: initialPhase,
+            working: workingPhase,
+            fatigue: fatiguePhase
         }
-      }
+    };
+
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(document.getElementById("calculation-chart"), {
+        type: "line",
+        data: {
+            labels: Array.from({ length: 20 }, (_, i) => `Periode ${i + 1}`),
+            datasets: [{
+                label: "Total Perhitungan",
+                data: results.map(r => r.calculations),
+                borderColor: "blue",
+                backgroundColor: "rgba(0, 0, 255, 0.1)",
+                fill: true,
+                tension: 0.2
+            }]
+        },
+        options: {
+            scales: { y: { beginAtZero: true } }
+        }
     });
-  }
+}
 
-  document.addEventListener("keydown", function (e) {
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-      const active = document.activeElement;
-      if (active.tagName === "INPUT") {
-        e.preventDefault();
-        const row = parseInt(active.dataset.row);
-        const col = parseInt(active.dataset.col);
-        let nextInput;
-        if (e.key === "ArrowRight") nextInput = document.querySelector(`input[data-row="${row}"][data-col="${col + 1}"]`);
-        if (e.key === "ArrowLeft") nextInput = document.querySelector(`input[data-row="${row}"][data-col="${col - 1}"]`);
-        if (e.key === "ArrowDown") nextInput = document.querySelector(`input[data-row="${row + 1}"][data-col="${col}"]`);
-        if (e.key === "ArrowUp") nextInput = document.querySelector(`input[data-row="${row - 1}"][data-col="${col}"]`);
-        if (nextInput) nextInput.focus();
-      }
-    }
-  });
-</script>
+        function accumulatePhase(target, data) {
+            target.calculations += data.calculations;
+            target.correct += data.correct;
+            target.incorrect += data.incorrect;
+            target.corrections += data.corrections;
+        }
 
+        function renderPhaseTable(title, phaseData, container) {
+            const segTable = document.createElement("table");
+            segTable.innerHTML = `<thead><tr><th colspan="5">${title}</th></tr>
+                <tr><th>Total</th><th>Benar</th><th>Salah</th><th>Pembetulan</th></tr></thead>
+                <tbody><tr>
+                    <td>${phaseData.calculations}</td>
+                    <td>${phaseData.correct}</td>
+                    <td>${phaseData.incorrect}</td>
+                    <td>${phaseData.corrections}</td>
+                </tr></tbody>`;
+            container.appendChild(segTable);
+        }
+
+        function saveCurrentInput() {
+            const respondentId = document.getElementById("respondent-id").value.trim();
+            if (!respondentId) {
+                alert("Masukkan ID responden untuk menyimpan data.");
+                return;
+            }
+
+            const data = {};
+
+            document.querySelectorAll("input[data-row][data-col]").forEach(input => {
+                const value = input.value.trim();
+                if (value) data[`${input.dataset.row},${input.dataset.col}`] = value;
+            });
+
+            data.meta = {
+                id: respondentId,
+                name: document.getElementById("respondent-name").value.trim(),
+                class: document.getElementById("respondent-class").value.trim(),
+                birth: document.getElementById("respondent-birth").value.trim(),
+                gender: document.getElementById("respondent-gender").value.trim()
+            };
+
+            localStorage.setItem(`responden-${respondentId}`, JSON.stringify(data));
+            alert("Data tersimpan.");
+        }
+
+           function loadInput(respondentId) {
+            if (!respondentId) {
+                alert("Masukkan ID responden.");
+                return;
+            }
+            if (!localStorage.getItem(`responden-${respondentId}`)) {
+                alert("Data tidak ditemukan.");
+                return;
+            }
+            loadRespondentData(respondentId);
+            alert("Data dimuat.");
+        }
+
+
+async function exportAllResults() {
+            const workbook = new ExcelJS.Workbook();
+
+            let allRespondentsData = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith("responden-")) {
+                    const respondentId = key.replace("responden-", "");
+                    const data = JSON.parse(localStorage.getItem(key));
+                    allRespondentsData.push({ respondentId, data });
+                }
+            }
+
+            allRespondentsData.sort((a, b) => {
+                return Number(a.respondentId) - Number(b.respondentId);
+            });
+
+            if (allRespondentsData.length === 0) {
+                alert("No respondent data found in local storage to export.");
+                return;
+            }
+
+            let sheetNumber = 1;
+
+            for (const { respondentId, data: storedData } of allRespondentsData) {
+                const respondentName = storedData.meta?.name || "";
+                let cleanName = respondentName.replace(/[\[\]\*\?\/\:\\]/g, '').trim();
+                if (cleanName.length > 25) { cleanName = cleanName.substring(0, 25);
+                }
+                const sheetName = `${sheetNumber}. ${cleanName || 'Tanpa Nama'}`;
+
+                const worksheet = workbook.addWorksheet(sheetName);
+
+                let currentResults = Array.from({ length: 20 }, () => ({ calculations: 0, correct: 0, incorrect: 0, corrections: 0 }));
+                let currentAnalysisSummary = {
+                    detailed: [],
+                    phases: {
+                        initial: { calculations: 0, correct: 0, incorrect: 0, corrections: 0 },
+                        working: { calculations: 0, correct: 0, incorrect: 0, corrections: 0 },
+                        fatigue: { calculations: 0, correct: 0, incorrect: 0, corrections: 0 }
+                    }
+                };
+
+                let period = 0;
+                for (let col = 0; col < COLUMNS; col++) {
+                    for (let row = 0; row < ROWS; row++) {
+                        const key = `${row},${col}`;
+                        const value = storedData[key]?.trim().toUpperCase();
+
+                        if (!value) continue;
+
+                        const digit = value[0];
+                        const isCorrection = value.includes("X");
+                        const hasG = value.includes("G");
+
+                        if (hasG && period < 19) {
+                            period++;
+                        }
+
+                        if (period >= currentResults.length) {
+                            console.warn(`Period index out of bounds for respondent ${respondentId}. Max period is ${currentResults.length}.`);
+                            break;
+                        }
+
+                        currentResults[period].calculations++;
+
+                        const correct = correctAnswers?.[row]?.[col];
+                        const isCorrect = digit === correct;
+
+                        if (isCorrection) {
+                            isCorrect ? currentResults[period].corrections++ : currentResults[period].incorrect++;
+                        } else {
+                            isCorrect ? currentResults[period].correct++ : currentResults[period].incorrect++;
+                        }
+                    }
+                }
+
+                for (let i = 0; i < 5; i++) accumulatePhase(currentAnalysisSummary.phases.initial, currentResults[i]);
+                for (let i = 5; i < 17; i++) accumulatePhase(currentAnalysisSummary.phases.working, currentResults[i]);
+                for (let i = 17; i < 20; i++) accumulatePhase(currentAnalysisSummary.phases.fatigue, currentResults[i]);
+                currentAnalysisSummary.detailed = currentResults;
+
+                worksheet.addRow(["ID", storedData.meta?.id || respondentId]);
+                worksheet.addRow(["Nama", storedData.meta?.name || ""]);
+                worksheet.addRow(["Kelas", storedData.meta?.class || ""]);
+                worksheet.addRow(["Tempat, Tanggal lahir", storedData.meta?.birth || ""]);
+                worksheet.addRow(["Jenis Kelamin", storedData.meta?.gender || ""]);
+                worksheet.addRow([]);
+
+                worksheet.addRow(["Periode", "Total", "Benar", "Salah", "Pembetulan"]);
+                currentResults.forEach((r, idx) => {
+                    worksheet.addRow([idx + 1, r.calculations, r.correct, r.incorrect, r.corrections]);
+                });
+                worksheet.addRow([]);
+
+                worksheet.addRow(["Segmen", "Total", "Benar", "Salah", "Pembetulan"]);
+                worksheet.addRow(["Initial", currentAnalysisSummary.phases.initial.calculations, currentAnalysisSummary.phases.initial.correct, currentAnalysisSummary.phases.initial.incorrect, currentAnalysisSummary.phases.initial.corrections]);
+                worksheet.addRow(["Working", currentAnalysisSummary.phases.working.calculations, currentAnalysisSummary.phases.working.correct, currentAnalysisSummary.phases.working.incorrect, currentAnalysisSummary.phases.working.corrections]);
+                worksheet.addRow(["Fatigue", currentAnalysisSummary.phases.fatigue.calculations, currentAnalysisSummary.phases.fatigue.correct, currentAnalysisSummary.phases.fatigue.incorrect, currentAnalysisSummary.phases.fatigue.corrections]);
+                worksheet.addRow([]); 
+
+                worksheet.columns.forEach(column => {
+                    let maxLength = 0;
+                    column.eachCell({ includeEmpty: true }, cell => {
+                        const columnText = cell.text ? cell.text.toString() : '';
+                        maxLength = Math.max(maxLength, columnText.length);
+                    });
+                    column.width = maxLength < 10 ? 10 : maxLength + 2;
+                });
+
+                sheetNumber++;
+            }
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+            saveAs(blob, "Hasil_Tes_Pauli.xlsx");
+        }
+
+        async function exportAllSavedIDs() {
+            const allData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith("responden-")) {
+                    const data = localStorage.getItem(key); 
+                    allData[key] = JSON.parse(data); 
+                }
+            }
+
+            if (Object.keys(allData).length === 0) {
+                alert("Tidak ada data responden yang tersimpan untuk diunduh.");
+                return;
+            }
+
+            const jsonData = JSON.stringify(allData, null, 2);
+            const blob = new Blob([jsonData], { type: "application/json" });
+            saveAs(blob, "pauli_all_respondent_raw_data.json");
+            alert("JSON berhasil diunduh.");
+        }
+
+        async function exportAllSavedIDs() {
+            const allData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith("responden-")) {
+                    const data = localStorage.getItem(key); 
+                    allData[key] = JSON.parse(data); 
+                }
+            }
+
+            if (Object.keys(allData).length === 0) {
+                alert("Tidak ada data responden yang tersimpan untuk diunduh.");
+                return;
+            }
+
+            const jsonData = JSON.stringify(allData, null, 2); 
+            const blob = new Blob([jsonData], { type: "application/json" });
+            saveAs(blob, "pauli_all_respondent_raw_data.json");
+            alert("Semua data mentah berhasil diunduh.");
+        }
+
+
+        async function exportAllSavedIDs() {
+            const allData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith("responden-")) {
+                    const data = localStorage.getItem(key);
+                    allData[key] = JSON.parse(data); 
+                }
+            }
+
+            if (Object.keys(allData).length === 0) {
+                alert("Tidak ada data responden yang tersimpan untuk diunduh.");
+                return;
+            }
+
+            const jsonData = JSON.stringify(allData, null, 2); 
+            const blob = new Blob([jsonData], { type: "application/json" });
+            saveAs(blob, "pauli_all_respondent_raw_data.json");
+            alert("Semua data mentah responden berhasil diunduh.");
+        }
+
+        document.getElementById('importFile').addEventListener('change', importAllSavedIDs);
+
+        function importAllSavedIDs(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    let importedCount = 0;
+                    let existingCount = 0;
+
+                    if (confirm("Mengimpor data akan menimpa SELURUH data yang belum di-save. Lanjutkan?")) {
+                        for (const key in importedData) {
+                            if (key.startsWith("responden-") && importedData.hasOwnProperty(key)) {
+                                const respondentId = key.replace("responden-", "");
+                                if (localStorage.getItem(key)) {
+                                    existingCount++;
+                                }
+                                localStorage.setItem(key, JSON.stringify(importedData[key]));
+                                importedCount++;
+                            }
+                        }
+                        alert(`Data berhasil diperbaharui.`);
+                        const currentId = document.getElementById("respondent-id").value.trim();
+                        if (currentId && importedData[`responden-${currentId}`]) {
+                            loadRespondentData(currentId);
+                        }
+                    }
+                } catch (error) {
+                    alert("Gagal membaca atau memproses file. Pastikan itu adalah file JSON yang valid.");
+                    console.error("Error importing data:", error);
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+
+	async function downloadChartImage() {
+            const chartCanvas = document.getElementById("calculation-chart");
+            if (!chartCanvas) {
+                alert("Grafik belum dibuat. Harap lakukan analisis terlebih dahulu.");
+                return;
+            }
+
+            const respondentName = document.getElementById("respondent-name").value.trim();
+            let fileName = "grafik_perhitungan";
+
+            if (respondentName) {
+            const sanitizedName = respondentName.replace(/[^a-zA-Z0-9_\- ]/g, "").replace(/ /g, "_");
+                fileName = `grafik_${sanitizedName}`;
+            }
+
+            const a = document.createElement("a");
+            document.body.appendChild(a);
+
+            a.download = `${fileName}.png`;
+            a.href = chartCanvas.toDataURL("image/png");
+
+            a.click();
+
+            document.body.removeChild(a);
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            fetch("pauliz.csv")
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    return res.text();
+                })
+                .then(csv => {
+                    correctAnswers = csv.trim().split("\n").map(line => line.split(",").map(cell => cell.trim()));
+                    console.log("Correct answers loaded:", correctAnswers.length, "rows");
+                })
+                .catch(err => console.error("Gagal memuat CSV:", err));
+        });
+
+        // Navigasi
+        document.addEventListener("keydown", e => {
+            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+                const active = document.activeElement;
+                if (active.tagName === "INPUT" && active.dataset.row !== undefined && active.dataset.col !== undefined) {
+                    e.preventDefault();
+                    const row = parseInt(active.dataset.row);
+                    const col = parseInt(active.dataset.col);
+                    const move = {
+                        ArrowRight: [0, 1],
+                        ArrowLeft: [0, -1],
+                        ArrowDown: [1, 0],
+                        ArrowUp: [-1, 0]
+                    }[e.key];
+                    const next = document.querySelector(`input[data-row="${row + move[0]}"][data-col="${col + move[1]}"]`);
+                    if (next) next.focus();
+                }
+            }
+        });
+    </script>
 </body>
 </html>
