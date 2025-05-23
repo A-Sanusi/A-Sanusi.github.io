@@ -196,9 +196,9 @@
     output.appendChild(resultTable);
 
     const seg = [
-      results.slice(0, 5),
-      results.slice(5, 17),
-      results.slice(17, 20)
+      results.slice(0, 4),
+      results.slice(5, 16),
+      results.slice(16, 19)
     ];
 
     seg.forEach((s, i) => {
@@ -209,10 +209,25 @@
         corrections: a.corrections + b.corrections
       }), { calculations: 0, correct: 0, incorrect: 0, corrections: 0 });
 
+    let SegmentName = "";
+	    switch(i) {
+	       case 0:
+		SegmentName ="Initial Phase (Periode 1-5)";
+		break;
+	       case 1:
+		SegmentName ="Working Phase (Periode 6-17)";
+		break;
+	       case 2:
+		SegmentName ="Fatigue Phase (Periode 18-20)";
+		break;
+	       default:
+		SegmentName ="";
+		break;
+	    }
       const segTable = document.createElement("table");
       segTable.innerHTML = `
         <thead>
-          <tr><th colspan="5">Segmen ${i + 1}</th></tr>
+          <tr><th colspan="5">${SegmentName} </th></tr>
           <tr>
             <th>Total Perhitungan</th>
             <th>Benar</th>
