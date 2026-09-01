@@ -22,7 +22,7 @@ def extract_student_name(filename: str) -> str:
 
 
 st.set_page_config(page_title="PDF Merger")
-st.title("PDF Merger")
+st.title("PDF Merger (biar cepet selesai hehe)")
 
 uploaded_files = st.file_uploader(
     "Pilih file", type=["pdf"], accept_multiple_files=True
@@ -66,7 +66,7 @@ if uploaded_files:
 
         zip_buffer.seek(0)
         st.success(
-            f"{len(student_files)} sukses disatukan"
+            f"{len(student_files)} PDF siswa sukses disatukan"
         )
 
         st.download_button(
