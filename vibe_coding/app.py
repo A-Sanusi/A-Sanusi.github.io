@@ -22,7 +22,6 @@ def extract_student_name(filename: str) -> str:
 
 
 st.set_page_config(page_title="PDF Merger")
-st.markdown('<style>[data-testid="stFileUploader"] { max-height: 800px !important; overflow-y: auto !important; }</style>', unsafe_allow_html=True)
 st.title("PDF Merger (biar cepet selesai hehe)")
 
 uploaded_files = st.file_uploader(
