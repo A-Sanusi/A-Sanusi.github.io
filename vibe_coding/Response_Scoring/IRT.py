@@ -12,6 +12,7 @@ st.title("IRT Tools")
 
 # 1. Dynamic File Upload Widget
 uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx", "xls", "xlsm"])
+file_base = uploaded_file.name.rsplit(".", 1)[0]
 
 # 2. Halt execution until a file is uploaded
 if uploaded_file is None:
@@ -109,5 +110,5 @@ output_buffer.seek(0)
 st.download_button(
     label="Download Skoring (.xlsx)",
     data=output_buffer,
-    file_name=f"Processed_{uploaded_file.name}_IRT_SKORING",
+    file_name=f"Processed_{uploaded_file.name}_IRT_SKORING.xlsx",
 )
