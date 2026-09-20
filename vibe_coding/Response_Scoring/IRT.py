@@ -27,7 +27,7 @@ df = pd.read_excel(uploaded_file, sheet_name=selected_sheet)
 
 # Select items (From index 3 to the last column)
 total_cols = df.shape[1]
-df_items = df.iloc[:, 3:total_cols].copy()
+df_items = df.iloc[:, 0:total_cols].copy()
 df_items = df_items.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
 
 # Filter out non-varying columns (std == 0)
@@ -64,7 +64,7 @@ def neg_log_likelihood(params, X, N, J):
     return -(log_lik + prior_theta + prior_a + prior_b)
 
 #Parameterisasi
-with st.spinner("Calculating 2PL IRT parameters..."):
+with st.spinner("Loading..."):
     # Initial guesses: theta = standardized raw score, a = 1, b = inverted difficulty
     raw_totals = X.sum(axis=1)
     init_theta = (raw_totals - raw_totals.mean()) / (raw_totals.std() + 1e-5)
@@ -107,7 +107,7 @@ with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
 output_buffer.seek(0)
 
 st.download_button(
-    label="Download Processed IRT Scores (.xlsx)",
+    label="Download Skoring (.xlsx)",
     data=output_buffer,
     file_name=f"Processed_{uploaded_file.name}",
 )
