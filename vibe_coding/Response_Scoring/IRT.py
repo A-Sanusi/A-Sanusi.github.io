@@ -27,7 +27,7 @@ df = pd.read_excel(uploaded_file, sheet_name=selected_sheet)
 
 # Select items (From index 3 to the last column)
 total_cols = df.shape[1]
-df_items = df.iloc[:, 0:total_cols].copy()
+df_items = df.iloc[:, 3:total_cols].copy()
 df_items = df_items.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
 
 # Filter out non-varying columns (std == 0)
@@ -92,7 +92,7 @@ with st.spinner("Loading..."):
     # Extract estimated theta scores
     estimated_theta = res.x[:N]
 
-    # Standardize theta to Mean = 0, SD = 1
+    # Standarisasi theta to Mean = 0, SD = 1
     estimated_theta = (estimated_theta - estimated_theta.mean()) / (estimated_theta.std() + 1e-5)
 
 #Skoring
@@ -109,5 +109,5 @@ output_buffer.seek(0)
 st.download_button(
     label="Download Skoring (.xlsx)",
     data=output_buffer,
-    file_name=f"Processed_{uploaded_file.name}",
+    file_name=f"Processed_{uploaded_file.name} IRT SKORING",
 )
