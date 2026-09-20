@@ -7,15 +7,14 @@ import streamlit as st
 from scipy.optimize import minimize
 
 # Must be the first Streamlit command in the script
-st.set_page_config(page_title="IRT Assessment Tools")
-st.title("IRT Assessment Tools")
+st.set_page_config(page_title="Penilaian")
+st.title("IRT Tools")
 
 # 1. Dynamic File Upload Widget
 uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx", "xls", "xlsm"])
 
 # 2. Halt execution until a file is uploaded
 if uploaded_file is None:
-    st.info("Please upload an Excel file to run the IRT scoring.")
     st.stop()
 
 # 3. Inspect available sheets dynamically
