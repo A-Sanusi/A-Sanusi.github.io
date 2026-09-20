@@ -109,5 +109,5 @@ output_buffer.seek(0)
 st.download_button(
     label="Download Skoring (.xlsx)",
     data=output_buffer,
-    file_name=f"Processed_{uploaded_file.name IRT SKORING}",
+    file_name=f"Processed_{uploaded_file.name}_IRT_SKORING",
 )
