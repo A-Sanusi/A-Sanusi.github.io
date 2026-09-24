@@ -7,7 +7,6 @@ import streamlit as st
 st.set_page_config(page_title="Skoring IRT 3PL", layout="wide")
 st.title("Skoring IRT (3PL Model - EAP)")
 
-# Fixed Constants (Standard Metric Defaults)
 D = 1.702
 TARGET_MEAN = 500.0
 TARGET_SD = 75.0
@@ -24,7 +23,6 @@ def clean_question_id(series_or_columns):
         .str.replace(r"\.0$", "", regex=True)
         .str.strip()
     )
-
 
 # --- 1. File Uploaders ---
 col1, col2 = st.columns(2)
@@ -133,7 +131,7 @@ def score_eap_3pl(X, a, b, c, D=1.702, grid_points=101):
 
 # --- 5. Calculation & Display ---
 st.divider()
-st.subheader(f"Hasil Skoring ({len(matched_q_cols)} Soal Ter-match)")
+st.subheader(f"Hasil Skoring")
 
 with st.spinner("Menghitung skor IRT EAP..."):
     theta_estimates, se_estimates = score_eap_3pl(X, a, b, c, D)
@@ -147,7 +145,6 @@ for idx, row in df_resp.iterrows():
     cabang_val = row[cabang_col_name]
     raw_score = np.sum(X[idx])
     theta_val = theta_estimates[idx]
-    se_val = se_estimates[idx]
 
     scaled_score = np.clip(
         round(TARGET_MEAN + TARGET_SD * theta_val, 2), MIN_SCORE, MAX_SCORE
@@ -159,7 +156,6 @@ for idx, row in df_resp.iterrows():
             "Cabang": cabang_val,
             "Banyak Soal Benar": int(raw_score),
             "Estimasi Theta": round(theta_val, 4),
-            "Standard Error (SE)": round(se_val, 4),
             "Skor IRT": scaled_score,
         }
     )
@@ -178,5 +174,4 @@ st.download_button(
     label="Download Hasil Excel",
     data=buffer.getvalue(),
     file_name=output_filename,
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 )
