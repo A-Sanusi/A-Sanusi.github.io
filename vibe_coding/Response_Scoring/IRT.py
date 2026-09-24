@@ -44,10 +44,15 @@ df_param_raw = pd.read_excel(uploaded_file_2, sheet_name=selected_sheet_2)
 # Extract Columns D, E, F, G (0-indexed position 3, 4, 5, 6)
 df_param = df_param_raw.iloc[:, [3, 4, 5, 6]].copy()
 df_param.columns = ["Question ID", "Discrimination", "Difficulty", "Guessing"]
-
 # Clean Question IDs to strings to prevent type mismatch during alignment
 df_param["Question ID"] = df_param["Question ID"].astype(str).str.strip()
-df_resp.columns = df_resp.columns.astype(str).str.strip()
+
+# Remove 'ID :' prefix and trim spaces from response column headers
+df_resp.columns = (
+    df_resp.columns.astype(str)
+    .str.replace(r'^ID\s*:\s*', '', regex=True)
+    .str.strip()
+)
 
 # --- 4. Align Parameters with Response Columns ---
 common_questions = [q for q in df_resp.columns if q in df_param["Question ID"].values]
