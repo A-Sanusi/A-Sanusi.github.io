@@ -45,9 +45,15 @@ selected_sheet = st.selectbox(
 )
 df_resp_raw = pd.read_excel(uploaded_file, sheet_name=selected_sheet, header=1)
 df_resp = df_resp_raw.iloc[1:].copy()
+
+# Store column references BEFORE setting index
 test_taker_col = df_resp.columns[0]
+cabang_col_name = df_resp.columns[1]  # Store column name for Cabang (Column B)
+
 df_resp.set_index(test_taker_col, inplace=True)
 df_resp.dropna(how="all", inplace=True)
+
+# Clean question headers
 df_resp.columns = clean_question_id(df_resp.columns)
 
 # --- 3. Load Parameters Sheet ---
@@ -111,20 +117,24 @@ st.subheader("Results")
 results = []
 for test_taker, row in df_resp_aligned.iterrows():
     response_vector = row.values
-    cabang = df_resp.columns[1]
+
+    # ✅ Extract actual cell value for Cabang for this test taker row
+    cabang_val = df_resp.loc[test_taker, clean_question_id(pd.Series([cabang_col_name]))[0]]
+    if isinstance(cabang_val, pd.Series):
+        cabang_val = cabang_val.iloc[0]
+
     raw_score = np.sum(response_vector)
     theta_est = estimate_ability(response_vector, a, b, c)
-    skor_irt = np.clip(round(500 + 75 * theta_est,2), 200, 800)
+    skor_irt = np.clip(round(500 + 75 * theta_est, 2), 200, 800)
 
     results.append({
         "Nama": test_taker,
-        "Cabang": cabang,
+        "Cabang": cabang_val,
         "Banyak Soal Benar": int(raw_score),
         "Estimasi Parameter": round(theta_est, 4),
         "Skor IRT": skor_irt,
     })
 
-# Fixed: set_index to "Nama" instead of "Test Taker"
 df_results = pd.DataFrame(results).set_index("Nama")
 
 st.write(
@@ -144,4 +154,5 @@ st.download_button(
     label="Download Hasil",
     data=buffer.getvalue(),
     file_name=output_filename,
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 )
