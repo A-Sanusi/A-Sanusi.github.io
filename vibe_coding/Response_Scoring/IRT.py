@@ -138,6 +138,5 @@ with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
 st.download_button(
     label="Download Results Excel (.xlsx)",
     data=buffer.getvalue(),
-    file_name="irt_3pl_results.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    file_name=f"Processed_{uploaded_file.name.rsplit(".", 1)[0]}_IRT_SKORING.xlsx",
 )
