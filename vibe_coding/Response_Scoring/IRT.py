@@ -83,13 +83,11 @@ c = df_param_aligned["Guessing"].values
 def probability_3pl(theta, a, b, c):
     return c + (1 - c) / (1 + np.exp(-a * (theta - b)))
 
-
 def negative_log_likelihood(theta, response, a, b, c):
     p = probability_3pl(theta, a, b, c)
     p = np.clip(p, 1e-9, 1 - 1e-9)
     ll = np.sum(response * np.log(p) + (1 - response) * np.log(1 - p))
     return -ll
-
 
 def estimate_ability(response, a, b, c):
     result = minimize_scalar(
@@ -99,7 +97,6 @@ def estimate_ability(response, a, b, c):
         method="bounded",
     )
     return result.x
-
 
 # --- 6. Execution & Results Display ---
 st.divider()
@@ -137,5 +134,4 @@ st.download_button(
     label="Download Hasil",
     data=buffer.getvalue(),
     file_name=output_filename,
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 )
