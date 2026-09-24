@@ -40,7 +40,7 @@ df_resp_raw = pd.read_excel(uploaded_file, sheet_name=selected_sheet, header=0)
 df_resp = df_resp_raw.iloc[1:].copy()
 
 # Set Column A as "Test Taker" index
-test_taker_col = df_resp.columns[1]
+test_taker_col = df_resp.columns[0]
 df_resp.set_index(test_taker_col, inplace=True)
 
 # Drop any entirely empty rows
