@@ -6,6 +6,16 @@ from scipy.optimize import minimize_scalar
 st.set_page_config(page_title="3PL IRT Model Calculator", layout="wide")
 st.title("3PL Item Response Theory (IRT) Calculator")
 
+# --- Helper Function for ID Standardization ---
+def clean_question_id(series_or_columns):
+    """Standardizes IDs across datasets by removing prefixes, trailing floats, and whitespace."""
+    return (
+        series_or_columns.astype(str)
+        .str.replace(r'^ID\s*:\s*', '', regex=True)  # Remove 'ID:' prefix
+        .str.replace(r'\.0$', '', regex=True)        # Remove trailing .0 from float conversions
+        .str.strip()
+    )
+
 # --- 1. File Uploaders ---
 col1, col2 = st.columns(2)
 
@@ -19,11 +29,11 @@ if uploaded_file is None or uploaded_file_2 is None:
     st.info("Silakan upload file.")
     st.stop()
 
-# --- 2. Load Responses Sheet (Starting Test Takers from Excel Row 3) ---
+# --- 2. Load Responses Sheet ---
 excel_file = pd.ExcelFile(uploaded_file)
 selected_sheet = st.selectbox("Select Responses Sheet:", excel_file.sheet_names, key="sheet_resp")
 
-# header=0 uses Excel Row 1 as Question ID headers
+# Header=0 uses Excel Row 1 as Question ID headers
 df_resp_raw = pd.read_excel(uploaded_file, sheet_name=selected_sheet, header=0)
 
 # Slice from index 1 to start test takers from Excel Row 3 (skipping Excel Row 2)
@@ -36,6 +46,9 @@ df_resp.set_index(test_taker_col, inplace=True)
 # Drop any entirely empty rows
 df_resp.dropna(how="all", inplace=True)
 
+# Clean Response Column Headers
+df_resp.columns = clean_question_id(df_resp.columns)
+
 # --- 3. Load Parameters Sheet ---
 excel_file_2 = pd.ExcelFile(uploaded_file_2)
 selected_sheet_2 = st.selectbox("Select Parameters Sheet:", excel_file_2.sheet_names, key="sheet_param")
@@ -44,21 +57,21 @@ df_param_raw = pd.read_excel(uploaded_file_2, sheet_name=selected_sheet_2)
 # Extract Columns D, E, F, G (0-indexed position 3, 4, 5, 6)
 df_param = df_param_raw.iloc[:, [3, 4, 5, 6]].copy()
 df_param.columns = ["Question ID", "Discrimination", "Difficulty", "Guessing"]
-# Clean Question IDs to strings to prevent type mismatch during alignment
-df_param["Question ID"] = df_param["Question ID"].astype(str).str.strip()
 
-# Remove 'ID :' prefix and trim spaces from response column headers
-df_resp.columns = (
-    df_resp.columns.astype(str)
-    .str.replace(r'^ID\s*:\s*', '', regex=True)
-    .str.strip()
-)
+# Clean Parameter Question IDs
+df_param["Question ID"] = clean_question_id(df_param["Question ID"])
+
+# Remove duplicate Question IDs in parameter sheet if present
+df_param = df_param.drop_duplicates(subset=["Question ID"])
 
 # --- 4. Align Parameters with Response Columns ---
 common_questions = [q for q in df_resp.columns if q in df_param["Question ID"].values]
 
 if not common_questions:
-    st.error("Gagal!")
+    st.error("Gagal! Question IDs in Response sheet do not match Parameter sheet.")
+    st.write("### Debugging Info:")
+    st.write("**Response Column IDs (First 5):**", list(df_resp.columns[:5]))
+    st.write("**Parameter Question IDs (First 5):**", list(df_param["Question ID"].head().values))
     st.stop()
 
 # Filter and reorder parameters to strictly match response matrix column order
