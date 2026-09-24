@@ -66,7 +66,7 @@ common_questions = [
 
 if not common_questions:
     st.error(
-        "Gagal! No matching Question IDs found between Responses and Parameters."
+        "Gagal!"
     )
     st.stop()
 
@@ -115,7 +115,7 @@ for test_taker, row in df_resp_aligned.iterrows():
     raw_score = np.sum(response_vector)
     theta_est = estimate_ability(response_vector, a, b, c)
     skor_irt = np.clip(round(500 + 75 * theta_est, 2), 200, 800)
-
+    
     results.append({
         "Nama": test_taker,
         "Cabang": cabang_val,
