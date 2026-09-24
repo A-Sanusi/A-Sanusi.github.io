@@ -116,10 +116,10 @@ for test_taker, row in df_resp_aligned.iterrows():
     theta_est = estimate_ability(response_vector, a, b, c)
 
     results.append({
-        "Test Taker": test_taker,
-        "Raw Score": int(raw_score),
-        "Total Questions": len(response_vector),
-        "Estimated Ability (Theta)": round(theta_est, 4),
+        "Nama": test_taker,
+        "Banyak Soal Benar": int(raw_score),
+        "Estimasi Parameter": round(theta_est, 4),
+        "Skor IRT": clip(500+75*round(theta_est,4),200,800)
     })
 
 df_results = pd.DataFrame(results).set_index("Test Taker")
@@ -136,7 +136,7 @@ with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
     df_results.to_excel(writer, sheet_name="3PL_IRT_Results")
 
 st.download_button(
-    label="Download Results Excel (.xlsx)",
+    label="Download Hasil",
     data=buffer.getvalue(),
     file_name=f"{uploaded_file.name.rsplit(".", 1)[0]} IRT SKORING.xlsx",
 )
