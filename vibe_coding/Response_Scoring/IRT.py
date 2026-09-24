@@ -7,10 +7,7 @@ import streamlit as st
 st.set_page_config(page_title="3PL IRT Model Calculator", layout="wide")
 st.title("3PL Item Response Theory (IRT) Calculator")
 
-
-# --- Helper Function for ID Standardization ---
 def clean_question_id(series_or_columns):
-    """Standardizes IDs across datasets by removing prefixes, trailing floats, and whitespace."""
     return (
         series_or_columns.astype(str)
         .str.replace(r"^ID\s*:\s*", "", regex=True)  # Remove 'ID:' prefix
@@ -19,7 +16,6 @@ def clean_question_id(series_or_columns):
         )  # Remove trailing .0 from float conversions
         .str.strip()
     )
-
 
 # --- 1. File Uploaders ---
 col1, col2 = st.columns(2)
@@ -45,15 +41,11 @@ selected_sheet = st.selectbox(
 )
 df_resp_raw = pd.read_excel(uploaded_file, sheet_name=selected_sheet, header=1)
 df_resp = df_resp_raw.iloc[1:].copy()
-
-# Store column references BEFORE setting index
 test_taker_col = df_resp.columns[0]
 cabang_col_name = df_resp.columns[1]  # Store column name for Cabang (Column B)
 
 df_resp.set_index(test_taker_col, inplace=True)
 df_resp.dropna(how="all", inplace=True)
-
-# Clean question headers
 df_resp.columns = clean_question_id(df_resp.columns)
 
 # --- 3. Load Parameters Sheet ---
@@ -117,12 +109,9 @@ st.subheader("Results")
 results = []
 for test_taker, row in df_resp_aligned.iterrows():
     response_vector = row.values
-
-    # ✅ Extract actual cell value for Cabang for this test taker row
     cabang_val = df_resp.loc[test_taker, clean_question_id(pd.Series([cabang_col_name]))[0]]
     if isinstance(cabang_val, pd.Series):
         cabang_val = cabang_val.iloc[0]
-
     raw_score = np.sum(response_vector)
     theta_est = estimate_ability(response_vector, a, b, c)
     skor_irt = np.clip(round(500 + 75 * theta_est, 2), 200, 800)
