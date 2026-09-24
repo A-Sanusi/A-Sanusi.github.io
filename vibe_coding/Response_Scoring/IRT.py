@@ -98,7 +98,7 @@ def negative_log_likelihood(theta, response, a, b, c):
 def estimate_ability(response, a, b, c):
     result = minimize_scalar(
         negative_log_likelihood,
-        bounds=(-4.0, 4.0),
+        bounds=(-10.0, 10.0),
         args=(response, a, b, c),
         method="bounded",
     )
