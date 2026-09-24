@@ -114,12 +114,13 @@ for test_taker, row in df_resp_aligned.iterrows():
     response_vector = row.values
     raw_score = np.sum(response_vector)
     theta_est = estimate_ability(response_vector, a, b, c)
-
+    skor_irt = np.clip(round(500 + 75 * theta_est), 200, 800)
+    
     results.append({
         "Nama": test_taker,
         "Banyak Soal Benar": int(raw_score),
         "Estimasi Parameter": round(theta_est, 4),
-        "Skor IRT": np.clip(500+75*round(theta_est,4),200,800)
+        "Skor IRT": round(skor_irt, 2)
     })
 
 df_results = pd.DataFrame(results).set_index("Test Taker")
