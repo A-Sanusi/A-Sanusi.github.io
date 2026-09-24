@@ -119,7 +119,7 @@ for test_taker, row in df_resp_aligned.iterrows():
         "Nama": test_taker,
         "Banyak Soal Benar": int(raw_score),
         "Estimasi Parameter": round(theta_est, 4),
-        "Skor IRT": clip(500+75*round(theta_est,4),200,800)
+        "Skor IRT": np.clip(500+75*round(theta_est,4),200,800)
     })
 
 df_results = pd.DataFrame(results).set_index("Test Taker")
