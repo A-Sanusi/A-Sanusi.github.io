@@ -16,7 +16,7 @@ with col2:
     uploaded_file_2 = st.file_uploader("2. Upload Parameters Excel", type=["xlsx", "xls", "xlsm"])
 
 if uploaded_file is None or uploaded_file_2 is None:
-    st.info("Gagal!")
+    st.info("Silakan upload file.")
     st.stop()
 
 # --- 2. Load Responses Sheet (Starting Test Takers from Excel Row 3) ---
