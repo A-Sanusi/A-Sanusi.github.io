@@ -4,16 +4,16 @@ import pandas as pd
 from scipy.optimize import minimize_scalar
 import streamlit as st
 
-st.set_page_config(page_title="3PL IRT Model Calculator", layout="wide")
-st.title("3PL Item Response Theory (IRT) Calculator")
+st.set_page_config(page_title="Skoring IRT", layout="wide")
+st.title("Skoring IRT")
 
 def clean_question_id(series_or_columns):
     return (
         series_or_columns.astype(str)
-        .str.replace(r"^ID\s*:\s*", "", regex=True)  # Remove 'ID:' prefix
+        .str.replace(r"^ID\s*:\s*", "", regex=True)
         .str.replace(
             r"\.0$", "", regex=True
-        )  # Remove trailing .0 from float conversions
+        )
         .str.strip()
     )
 
@@ -22,12 +22,12 @@ col1, col2 = st.columns(2)
 
 with col1:
     uploaded_file = st.file_uploader(
-        "1. Upload Responses Excel", type=["xlsx", "xls", "xlsm"]
+        "1. Upload Jawaban Siswa", type=["xlsx", "xls", "xlsm"]
     )
 
 with col2:
     uploaded_file_2 = st.file_uploader(
-        "2. Upload Parameters Excel", type=["xlsx", "xls", "xlsm"]
+        "2. Upload Parameter Try Out", type=["xlsx", "xls", "xlsm"]
     )
 
 if uploaded_file is None or uploaded_file_2 is None:
@@ -37,7 +37,7 @@ if uploaded_file is None or uploaded_file_2 is None:
 # --- 2. Load Responses Sheet ---
 excel_file = pd.ExcelFile(uploaded_file)
 selected_sheet = st.selectbox(
-    "Select Responses Sheet:", excel_file.sheet_names, key="sheet_resp"
+    "Pilih Sheet Jawaban:", excel_file.sheet_names, key="sheet_resp"
 )
 df_resp_raw = pd.read_excel(uploaded_file, sheet_name=selected_sheet, header=1)
 df_resp = df_resp_raw.iloc[1:].copy()
@@ -51,7 +51,7 @@ df_resp.columns = clean_question_id(df_resp.columns)
 # --- 3. Load Parameters Sheet ---
 excel_file_2 = pd.ExcelFile(uploaded_file_2)
 selected_sheet_2 = st.selectbox(
-    "Select Parameters Sheet:", excel_file_2.sheet_names, key="sheet_param"
+    "Pilih Sheet Parameter:", excel_file_2.sheet_names, key="sheet_param"
 )
 df_param_raw = pd.read_excel(uploaded_file_2, sheet_name=selected_sheet_2)
 df_param = df_param_raw.iloc[:, [3, 4, 5, 6]].copy()
@@ -104,7 +104,7 @@ def estimate_ability(response, a, b, c):
 
 # --- 6. Execution & Results Display ---
 st.divider()
-st.subheader("Results")
+st.subheader("Hasil")
 
 results = []
 for test_taker, row in df_resp_aligned.iterrows():
@@ -125,11 +125,6 @@ for test_taker, row in df_resp_aligned.iterrows():
     })
 
 df_results = pd.DataFrame(results).set_index("Nama")
-
-st.write(
-    f"Successfully processed **{len(df_results)}** test takers across"
-    f" **{len(common_questions)}** items."
-)
 st.dataframe(df_results, use_container_width=True)
 
 # --- 7. Export to Excel ---
