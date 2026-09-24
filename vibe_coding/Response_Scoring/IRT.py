@@ -5,38 +5,18 @@ import scipy.stats as stats
 import streamlit as st
 
 st.set_page_config(page_title="Skoring IRT 3PL", layout="wide")
-st.title("Skoring IRT (3PL Model)")
+st.title("Skoring IRT (3PL Model - EAP)")
 
-# --- Sidebar Configuration ---
-st.sidebar.header("Konfigurasi IRT")
-
-# 1. Scaling Constant D
-metric_choice = st.sidebar.radio(
-    "Metrik Parameter (D):",
-    options=["Normal Metric (D = 1.702) - Standard Bilog/R", "Logistic Metric (D = 1.0)"],
-    index=0,
-    help="Gunakan D=1.702 jika parameter dikalibrasi di software seperti Bilog-MG atau R mirt (default)."
-)
-D = 1.702 if "1.702" in metric_choice else 1.0
-
-# 2. Estimation Method
-est_method = st.sidebar.selectbox(
-    "Metode Estimasi Theta:",
-    options=["EAP (Expected A Posteriori) - Recommended", "MAP (Maximum A Posteriori)"],
-    index=0,
-    help="EAP menggunakan integrasi grid Bayesian; sangat stabil dan standar industri."
-)
-
-# 3. Score Transformation Settings
-st.sidebar.subheader("Transformasi Skor")
-target_mean = st.sidebar.number_input("Target Mean Score", value=500.0, step=10.0)
-target_sd = st.sidebar.number_input("Target SD Score", value=75.0, step=5.0)
-min_score = st.sidebar.number_input("Batas Skor Minimum", value=200.0, step=10.0)
-max_score = st.sidebar.number_input("Batas Skor Maksimum", value=800.0, step=10.0)
+# Fixed Constants (Standard Metric Defaults)
+D = 1.702
+TARGET_MEAN = 500.0
+TARGET_SD = 75.0
+MIN_SCORE = 200.0
+MAX_SCORE = 800.0
 
 
 def clean_question_id(series_or_columns):
-    """Normalize Question IDs for accurate matching."""
+    """Normalize Question IDs for robust matching."""
     return (
         pd.Series(series_or_columns)
         .astype(str)
@@ -87,7 +67,7 @@ df_param = df_param_raw.iloc[:, [2, 3, 4, 5, 6]].copy()
 df_param.columns = ["Nomor Soal", "Question ID", "Discrimination", "Difficulty", "Guessing"]
 df_param["Clean_ID"] = clean_question_id(df_param["Question ID"])
 
-# Match response columns with parameters using exact Question IDs
+# Match response columns with parameter rows via Question ID
 resp_q_ids = clean_question_id(raw_q_cols)
 resp_id_map = dict(zip(raw_q_cols, resp_q_ids))
 
@@ -105,7 +85,7 @@ a = pd.to_numeric(df_param_aligned["Discrimination"], errors="coerce").values
 b = pd.to_numeric(df_param_aligned["Difficulty"], errors="coerce").values
 c = pd.to_numeric(df_param_aligned["Guessing"], errors="coerce").values
 
-# Prepare binary response matrix (N_students x N_items)
+# Prepare binary response matrix
 X = (
     df_resp[matched_q_cols]
     .astype(str)
@@ -115,46 +95,34 @@ X = (
     .values
 )
 
-# --- 4. IRT Engine (EAP & MAP Vectorized) ---
-def compute_3pl_prob(theta_grid, a, b, c, D):
-    """
-    Computes 3PL item response probabilities over a grid of theta.
-    Returns array of shape (N_items, N_grid)
-    """
-    # theta_grid: (N_grid,), a,b,c: (N_items,)
-    # Output: (N_items, N_grid)
-    exp_term = np.exp(-D * a[:, None] * (theta_grid[None, :] - b[:, None]))
-    p = c[:, None] + (1.0 - c[:, None]) / (1.0 + exp_term)
-    return np.clip(p, 1e-9, 1.0 - 1e-9)
 
-
-def score_eap(X, a, b, c, D, grid_points=101):
-    """
-    Calculates Expected A Posteriori (EAP) ability estimates and SEs.
-    Fully vectorized across all respondents.
-    """
+# --- 4. Vectorized 3PL EAP Scoring Function ---
+def score_eap_3pl(X, a, b, c, D=1.702, grid_points=101):
+    """Calculates Expected A Posteriori (EAP) ability theta and SE."""
     theta_grid = np.linspace(-4.0, 4.0, grid_points)
     prior_weights = stats.norm.pdf(theta_grid, 0, 1)
     prior_weights /= np.sum(prior_weights)
 
-    # Probabilities for correct (P) and incorrect (Q) responses
-    P = compute_3pl_prob(theta_grid, a, b, c, D)  # (N_items, N_grid)
+    # Calculate item response probabilities (N_items, N_grid)
+    exp_term = np.exp(-D * a[:, None] * (theta_grid[None, :] - b[:, None]))
+    P = c[:, None] + (1.0 - c[:, None]) / (1.0 + exp_term)
+    P = np.clip(P, 1e-9, 1.0 - 1e-9)
+
     log_P = np.log(P)
     log_Q = np.log(1.0 - P)
 
-    # Calculate log-likelihood for each respondent: (N_students, N_grid)
+    # Log-Likelihood per respondent (N_students, N_grid)
     log_L = np.dot(X, log_P) + np.dot(1.0 - X, log_Q)
 
-    # Log-sum-exp trick for numerical stability
+    # Log-sum-exp trick for numerical precision
     max_log_L = np.max(log_L, axis=1, keepdims=True)
     L = np.exp(log_L - max_log_L)
 
-    # Posterior distribution
-    posterior = L * prior_weights[None, :]  # (N_students, N_grid)
-    posterior_sum = np.sum(posterior, axis=1, keepdims=True)
-    posterior_norm = posterior / posterior_sum
+    # Normalize posterior distribution
+    posterior = L * prior_weights[None, :]
+    posterior_norm = posterior / np.sum(posterior, axis=1, keepdims=True)
 
-    # EAP Estimate (Mean) and Standard Error
+    # Expectation (Mean) and Variance (SE)
     theta_eap = np.sum(posterior_norm * theta_grid[None, :], axis=1)
     se_eap = np.sqrt(
         np.sum(posterior_norm * ((theta_grid[None, :] - theta_eap[:, None]) ** 2), axis=1)
@@ -163,23 +131,12 @@ def score_eap(X, a, b, c, D, grid_points=101):
     return theta_eap, se_eap
 
 
-# --- 5. Calculation & Output Display ---
+# --- 5. Calculation & Display ---
 st.divider()
 st.subheader(f"Hasil Skoring ({len(matched_q_cols)} Soal Ter-match)")
 
-with st.spinner("Menghitung skor IRT..."):
-    if "EAP" in est_method:
-        theta_estimates, se_estimates = score_eap(X, a, b, c, D)
-    else:
-        # Fallback MAP calculation using fine grid mode
-        theta_grid = np.linspace(-4.0, 4.0, 161)
-        P = compute_3pl_prob(theta_grid, a, b, c, D)
-        log_L = np.dot(X, np.log(P)) + np.dot(1.0 - X, np.log(1.0 - P))
-        log_prior = -0.5 * (theta_grid**2)
-        log_posterior = log_L + log_prior
-        best_indices = np.argmax(log_posterior, axis=1)
-        theta_estimates = theta_grid[best_indices]
-        se_estimates = np.zeros_like(theta_estimates)
+with st.spinner("Menghitung skor IRT EAP..."):
+    theta_estimates, se_estimates = score_eap_3pl(X, a, b, c, D)
 
 results = []
 for idx, row in df_resp.iterrows():
@@ -192,9 +149,8 @@ for idx, row in df_resp.iterrows():
     theta_val = theta_estimates[idx]
     se_val = se_estimates[idx]
 
-    # Linear transformation formula
     scaled_score = np.clip(
-        round(target_mean + target_sd * theta_val, 2), min_score, max_score
+        round(TARGET_MEAN + TARGET_SD * theta_val, 2), MIN_SCORE, MAX_SCORE
     )
 
     results.append(
@@ -203,7 +159,7 @@ for idx, row in df_resp.iterrows():
             "Cabang": cabang_val,
             "Banyak Soal Benar": int(raw_score),
             "Estimasi Theta": round(theta_val, 4),
-            "Standard Error (SE)": round(se_val, 4) if "EAP" in est_method else "N/A",
+            "Standard Error (SE)": round(se_val, 4),
             "Skor IRT": scaled_score,
         }
     )
@@ -222,4 +178,5 @@ st.download_button(
     label="Download Hasil Excel",
     data=buffer.getvalue(),
     file_name=output_filename,
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 )
