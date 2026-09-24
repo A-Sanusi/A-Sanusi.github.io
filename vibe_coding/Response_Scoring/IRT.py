@@ -111,7 +111,7 @@ st.subheader("Results")
 results = []
 for test_taker, row in df_resp_aligned.iterrows():
     response_vector = row.values
-    cabang_col = df_resp.columns[1]
+    cabang = df_resp.columns[1]
     raw_score = np.sum(response_vector)
     theta_est = estimate_ability(response_vector, a, b, c)
     skor_irt = np.clip(round(500 + 75 * theta_est,2), 200, 800)
