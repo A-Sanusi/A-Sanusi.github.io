@@ -62,7 +62,6 @@ df_param["Question ID"] = clean_question_id(df_param["Question ID"])
 df_param = df_param.drop_duplicates(subset=["Question ID"])
 
 # --- 4. Align Parameters with Response Columns ---
-# FIX: Defined common_questions before referencing it
 common_questions = [
     q for q in df_resp.columns if q in df_param["Question ID"].values
 ]
@@ -115,15 +114,16 @@ for test_taker, row in df_resp_aligned.iterrows():
     raw_score = np.sum(response_vector)
     theta_est = estimate_ability(response_vector, a, b, c)
     skor_irt = np.clip(round(500 + 75 * theta_est), 200, 800)
-    
+
     results.append({
         "Nama": test_taker,
         "Banyak Soal Benar": int(raw_score),
         "Estimasi Parameter": round(theta_est, 4),
-        "Skor IRT": round(skor_irt, 2)
+        "Skor IRT": round(skor_irt, 2),
     })
 
-df_results = pd.DataFrame(results).set_index("Test Taker")
+# Fixed: set_index to "Nama" instead of "Test Taker"
+df_results = pd.DataFrame(results).set_index("Nama")
 
 st.write(
     f"Successfully processed **{len(df_results)}** test takers across"
@@ -136,8 +136,11 @@ buffer = io.BytesIO()
 with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
     df_results.to_excel(writer, sheet_name="3PL_IRT_Results")
 
+output_filename = f"{uploaded_file.name.rsplit('.', 1)[0]} IRT SKORING.xlsx"
+
 st.download_button(
     label="Download Hasil",
     data=buffer.getvalue(),
-    file_name=f"{uploaded_file.name.rsplit(".", 1)[0]} IRT SKORING.xlsx",
+    file_name=output_filename,
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 )
