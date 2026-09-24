@@ -142,5 +142,4 @@ st.download_button(
     label="Download Hasil",
     data=buffer.getvalue(),
     file_name=output_filename,
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 )
