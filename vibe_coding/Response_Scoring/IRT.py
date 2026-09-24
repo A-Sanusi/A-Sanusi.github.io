@@ -96,7 +96,6 @@ X = (
 
 # --- 4. Vectorized 3PL EAP Scoring Function ---
 def score_eap_3pl(X, a, b, c, D=1.702, grid_points=101):
-    """Calculates Expected A Posteriori (EAP) ability theta and SE."""
     theta_grid = np.linspace(-4.0, 4.0, grid_points)
     prior_weights = stats.norm.pdf(theta_grid, 0, 1)
     prior_weights /= np.sum(prior_weights)
