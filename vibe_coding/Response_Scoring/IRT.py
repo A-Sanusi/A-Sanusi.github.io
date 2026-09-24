@@ -37,7 +37,7 @@ selected_sheet = st.selectbox("Select Responses Sheet:", excel_file.sheet_names,
 df_resp_raw = pd.read_excel(uploaded_file, sheet_name=selected_sheet, header=0)
 
 # Slice from index 1 to start test takers from Excel Row 3 (skipping Excel Row 2)
-df_resp = df_resp_raw.iloc[1:].copy()
+df_resp = df_resp_raw.iloc[3:].copy()
 
 # Set Column A as "Test Taker" index
 test_taker_col = df_resp.columns[0]
