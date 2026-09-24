@@ -46,6 +46,7 @@ selected_sheet = st.selectbox(
 df_resp_raw = pd.read_excel(uploaded_file, sheet_name=selected_sheet, header=1)
 df_resp = df_resp_raw.iloc[1:].copy()
 test_taker_col = df_resp.columns[0]
+cabang = df_resp.columns[1]
 df_resp.set_index(test_taker_col, inplace=True)
 df_resp.dropna(how="all", inplace=True)
 df_resp.columns = clean_question_id(df_resp.columns)
@@ -117,6 +118,7 @@ for test_taker, row in df_resp_aligned.iterrows():
 
     results.append({
         "Nama": test_taker,
+        "Cabang": cabang,
         "Banyak Soal Benar": int(raw_score),
         "Estimasi Parameter": round(theta_est, 4),
         "Skor IRT": skor_irt,
