@@ -42,8 +42,7 @@ selected_sheet = st.selectbox(
 df_resp_raw = pd.read_excel(uploaded_file, sheet_name=selected_sheet, header=1)
 df_resp = df_resp_raw.iloc[1:].copy()
 test_taker_col = df_resp.columns[0]
-cabang_col_name = df_resp.columns[1]  # Store column name for Cabang (Column B)
-
+cabang_col_name = df_resp.columns[1]
 df_resp.set_index(test_taker_col, inplace=True)
 df_resp.dropna(how="all", inplace=True)
 df_resp.columns = clean_question_id(df_resp.columns)
