@@ -29,7 +29,7 @@ col1, col2 = st.columns(2)
 
 with col1:
     uploaded_file = st.file_uploader(
-        "1. Upload Jawaban Siswa (Biner 1/0)", type=["xlsx", "xls", "xlsm"]
+        "1. Upload Jawaban Siswa", type=["xlsx", "xls", "xlsm"]
     )
 
 with col2:
