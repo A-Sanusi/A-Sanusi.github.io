@@ -1,113 +1,113 @@
-import io
-import re
-import zipfile
 import pandas as pd
 import numpy as np
 import streamlit as st
-from scipy.optimize import minimize
+from scipy.optimize import minimize_scalar
 
-# Must be the first Streamlit command in the script
-st.set_page_config(page_title="Penilaian")
-st.title("IRT Tools")
+st.set_page_config(page_title="3PL IRT Model Calculator", layout="wide")
+st.title("3PL Item Response Theory (IRT) Calculator")
 
-# 1. Dynamic File Upload Widget
-uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx", "xls", "xlsm"])
+# --- 1. File Uploaders ---
+col1, col2 = st.columns(2)
 
-# 2. Halt execution until a file is uploaded
-if uploaded_file is None:
+with col1:
+    uploaded_file = st.file_uploader("1. Upload Responses Excel", type=["xlsx", "xls", "xlsm"])
+
+with col2:
+    uploaded_file_2 = st.file_uploader("2. Upload Parameters Excel", type=["xlsx", "xls", "xlsm"])
+
+if uploaded_file is None or uploaded_file_2 is None:
+    st.info("Gagal!")
     st.stop()
 
-# 3. Inspect available sheets dynamically
+# --- 2. Load Responses Sheet (Starting Test Takers from Excel Row 3) ---
 excel_file = pd.ExcelFile(uploaded_file)
-sheet_names = excel_file.sheet_names
-selected_sheet = st.selectbox("Select Sheet:", sheet_names, index=0)
+selected_sheet = st.selectbox("Select Responses Sheet:", excel_file.sheet_names, key="sheet_resp")
 
-# Read the uploaded file and selected sheet
-df = pd.read_excel(uploaded_file, sheet_name=selected_sheet)
+# header=0 uses Excel Row 1 as Question ID headers
+df_resp_raw = pd.read_excel(uploaded_file, sheet_name=selected_sheet, header=0)
 
-# Select items (From index 3 to the last column)
-total_cols = df.shape[1]
-df_items = df.iloc[:, 3:total_cols].copy()
-df_items = df_items.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
+# Slice from index 1 to start test takers from Excel Row 3 (skipping Excel Row 2)
+df_resp = df_resp_raw.iloc[1:].copy()
 
-# Filter out non-varying columns (std == 0)
-valid_cols = [col for col in df_items.columns if df_items[col].std() > 0]
-clean_items = df_items[valid_cols]
+# Set Column A as "Test Taker" index
+test_taker_col = df_resp.columns[0]
+df_resp.set_index(test_taker_col, inplace=True)
 
-# Response matrix X of shape (N_students, J_items)
-X = clean_items.values
-N, J = X.shape
+# Drop any entirely empty rows
+df_resp.dropna(how="all", inplace=True)
 
-#Fungsi
-def sigmoid(z):
-    return 1 / (1 + np.exp(-np.clip(z, -30, 30)))
+# --- 3. Load Parameters Sheet ---
+excel_file_2 = pd.ExcelFile(uploaded_file_2)
+selected_sheet_2 = st.selectbox("Select Parameters Sheet:", excel_file_2.sheet_names, key="sheet_param")
+df_param_raw = pd.read_excel(uploaded_file_2, sheet_name=selected_sheet_2)
 
-# Joint Log-Likelihood with priors to stabilize estimation
-def neg_log_likelihood(params, X, N, J):
-    theta = params[:N]
-    a = params[N : N + J]
-    b = params[N + J :]
-    
-    # P_ij = P(X_ij = 1 | theta_i, a_j, b_j)
-    Z = a[None, :] * (theta[:, None] - b[None, :])
-    P = sigmoid(Z)
-    P = np.clip(P, 1e-9, 1 - 1e-9)
-    
-    # Bernoulli log-likelihood
-    log_lik = np.sum(X * np.log(P) + (1 - X) * np.log(1 - P))
-    
-    # Normal priors to prevent extreme drift (Bayesian Regularization)
-    prior_theta = np.sum(-0.5 * (theta ** 2))
-    prior_a = np.sum(-0.5 * ((a - 1.0) ** 2))
-    prior_b = np.sum(-0.5 * (b ** 2))
-    
-    return -(log_lik + prior_theta + prior_a + prior_b)
+# Extract Columns D, E, F, G (0-indexed position 3, 4, 5, 6)
+df_param = df_param_raw.iloc[:, [3, 4, 5, 6]].copy()
+df_param.columns = ["Question ID", "Discrimination", "Difficulty", "Guessing"]
 
-#Parameterisasi
-with st.spinner("Loading..."):
-    # Initial guesses: theta = standardized raw score, a = 1, b = inverted difficulty
-    raw_totals = X.sum(axis=1)
-    init_theta = (raw_totals - raw_totals.mean()) / (raw_totals.std() + 1e-5)
-    init_a = np.ones(J)
-    init_b = -np.log((X.mean(axis=0) + 1e-3) / (1 - X.mean(axis=0) + 1e-3))
+# Clean Question IDs to strings to prevent type mismatch during alignment
+df_param["Question ID"] = df_param["Question ID"].astype(str).str.strip()
+df_resp.columns = df_resp.columns.astype(str).str.strip()
 
-    init_params = np.concatenate([init_theta, init_a, init_b])
+# --- 4. Align Parameters with Response Columns ---
+common_questions = [q for q in df_resp.columns if q in df_param["Question ID"].values]
 
-    # Bounds: a (discrimination) [0.01, 4.0], b (difficulty) [-4.0, 4.0]
-    bounds = (
-        [(None, None)] * N +
-        [(0.01, 4.0)] * J +
-        [(-4.0, 4.0)] * J
+if not common_questions:
+    st.error("Gagal!")
+    st.stop()
+
+# Filter and reorder parameters to strictly match response matrix column order
+df_param_aligned = df_param.set_index("Question ID").loc[common_questions]
+df_resp_aligned = df_resp[common_questions].apply(pd.to_numeric, errors='coerce').fillna(0)
+
+a = df_param_aligned["Discrimination"].values
+b = df_param_aligned["Difficulty"].values
+c = df_param_aligned["Guessing"].values
+
+# --- 5. 3PL IRT Mathematical Functions ---
+def probability_3pl(theta, a, b, c):
+    """Calculates 3PL IRT probability for a given theta."""
+    return c + (1 - c) / (1 + np.exp(-a * (theta - b)))
+
+def negative_log_likelihood(theta, response, a, b, c):
+    """Computes Negative Log-Likelihood to minimize for theta estimation."""
+    p = probability_3pl(theta, a, b, c)
+    p = np.clip(p, 1e-9, 1 - 1e-9)
+    ll = np.sum(response * np.log(p) + (1 - response) * np.log(1 - p))
+    return -ll
+
+def estimate_ability(response, a, b, c):
+    """Finds optimal Theta using bounded Maximum Likelihood Estimation (-4.0 to +4.0)."""
+    result = minimize_scalar(
+        negative_log_likelihood, 
+        bounds=(-4.0, 4.0), 
+        args=(response, a, b, c), 
+        method='bounded'
     )
+    return result.x
 
-    res = minimize(
-        neg_log_likelihood, 
-        init_params, 
-        args=(X, N, J), 
-        method='L-BFGS-B', 
-        bounds=bounds,
-        options={'maxiter': 500}
-    )
+# --- 6. Execution & Results Display ---
+st.divider()
+st.subheader("Results")
 
-    # Extract estimated theta scores
-    estimated_theta = res.x[:N]
+results = []
+for test_taker, row in df_resp_aligned.iterrows():
+    response_vector = row.values
+    raw_score = np.sum(response_vector)
+    theta_est = estimate_ability(response_vector, a, b, c)
+    
+    results.append({
+        "Test Taker": test_taker,
+        "Raw Score": int(raw_score),
+        "Total Questions": len(response_vector),
+        "Estimated Ability (Theta)": round(theta_est, 4)
+    })
 
-    # Standarisasi theta to Mean = 0, SD = 1
-    estimated_theta = (estimated_theta - estimated_theta.mean()) / (estimated_theta.std() + 1e-5)
+df_results = pd.DataFrame(results).set_index("Test Taker")
 
-#Skoring
-df['Benar'] = df_items.sum(axis=1)
-df['Theta'] = estimated_theta
-df['Skor'] = (500 + (df['Theta'] * 100)).clip(200, 800).round(2)
+st.write(f"Successfully processed **{len(df_results)}** test takers across **{len(common_questions)}** items.")
+st.dataframe(df_results, use_container_width=True)
 
-#Output
-output_buffer = io.BytesIO()
-with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
-    df.to_excel(writer, index=False)
-output_buffer.seek(0)
-
-st.download_button(
-    label="Download Skoring (.xlsx)",
-    data=output_buffer,
-    file_name=f"Processed_{uploaded_file.name.rsplit(".", 1)[0]}_IRT_SKORING.xlsx",
-)
+# Option to download results
+csv = df_results.to_csv().encode('utf-8')
+st.download_button("Download Results CSV", csv, "irt_3pl_results.csv", "text/csv")
