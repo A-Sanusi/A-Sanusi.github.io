@@ -150,7 +150,7 @@ with tab_db:
 
 #Tab_TKA
 with tab_to_tka:
-    st.header("TO TKA Kini ada Ekstraknya 🟣")
+    st.header("Nilai TO Kini ada Ekstraknya 🟣")
 
     col1, col2 = st.columns(2)
     with col1:
