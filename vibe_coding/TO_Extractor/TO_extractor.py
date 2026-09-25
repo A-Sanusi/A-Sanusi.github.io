@@ -65,6 +65,7 @@ for sheet in target_sheets:
 
         nama_akun_2_col = df_nilai_raw.columns[1]  # Kolom Nama Siswa/Akun
         nilai_TO_col = df_nilai_raw.columns[4]  # Kolom Nilai
+        kategori_TO_col = df_nilai_raw.columns[5] #Kategori Nilai
 
         # Buat kunci pencocokan
         df_nilai_raw["key_match"] = (
@@ -125,5 +126,5 @@ with col_c:
 st.download_button(
     label="Download Hasil Nilai",
     data=excel_bytes,
-    file_name="Hasil_Nilai_TryOut.xlsx",
+    file_name="Hasil_Nilai_Try_Out.xlsx",
 )
