@@ -67,7 +67,7 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
 
             # Generate key_match using 'NAMA AKUN'
             df_nilai_raw["key_match"] = (
-                df_nilai_raw["NAMA AKUN"]
+                df_nilai_raw["NAMA AKUN TO"]
                 .astype(str)
                 .str.strip()
                 .str.lower()
