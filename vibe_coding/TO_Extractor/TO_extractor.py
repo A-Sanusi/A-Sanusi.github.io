@@ -41,9 +41,15 @@ df_siswa["key_match"] = (
 
 # 2. Proses pengambil nilai dari sheet sheet_siswa_1, sheet_siswa_2, sheet_siswa_3
 excel_file_2 = pd.ExcelFile(uploaded_file_2)
-selected_sheet_1 = st.selectbox("Pilih Sheet Nama: ", excel_file_2.sheet_names, key="sheet_siswa_1")
-selected_sheet_2 = st.selectbox("Pilih Sheet Nama: ", excel_file_2.sheet_names, key="sheet_siswa_2")
-selected_sheet_3 = st.selectbox("Pilih Sheet Nama: ", excel_file_2.sheet_names, key="sheet_siswa_3")
+selected_sheet_1 = st.selectbox(
+    "Pilih Sheet Nama: ", excel_file_2.sheet_names, key="sheet_siswa_1"
+)
+selected_sheet_2 = st.selectbox(
+    "Pilih Sheet Nama: ", excel_file_2.sheet_names, key="sheet_siswa_2"
+)
+selected_sheet_3 = st.selectbox(
+    "Pilih Sheet Nama: ", excel_file_2.sheet_names, key="sheet_siswa_3"
+)
 
 target_sheets = [selected_sheet_1, selected_sheet_2, selected_sheet_3]
 
@@ -75,12 +81,31 @@ for sheet in target_sheets:
     df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
 
 # Hapus kolom kunci bantu
-df_hasil = df_hasil.drop(columns=["key_match"]).dropna(
-    subset=[nama_siswa_col]
+df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=[nama_siswa_col])
+
+# 3. Tampilkan Hasil & Fitur Export
+st.subheader("Tabel Nilai Siswa")
+
+
+# Fungsi untuk mengubah DataFrame ke stream Bytes Excel
+def convert_df_to_excel(df):
+  output = io.BytesIO()
+  with pd.ExcelWriter(output, engine="openpyxl") as writer:
+    df.to_excel(writer, index=False, sheet_name="Hasil Nilai TO")
+  return output.getvalue()
+
+
+# Konversi DataFrame ke Excel
+excel_bytes = convert_df_to_excel(df_hasil)
+
+# Tombol Download Excel
+st.download_button(
+    label="📥 Download Hasil Nilai (Excel)",
+    data=excel_bytes,
+    file_name="Hasil_Nilai_TryOut.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 )
 
-# 3. Tampilkan Hasil
-st.subheader("Tabel Nilai Siswa")
 st.dataframe(df_hasil, use_container_width=True)
 
 # 4. Fitur Tambahan: Pilih Siswa untuk Melihat Detail Nilai
@@ -93,8 +118,14 @@ student_data = df_hasil[df_hasil[nama_siswa_col] == selected_student].iloc[0]
 
 col_a, col_b, col_c = st.columns(3)
 with col_a:
-  st.metric(f"{selected_sheet_1}", student_data.get(f"Nilai_{selected_sheet_1}", "-"))
+  st.metric(
+      f"{selected_sheet_1}", student_data.get(f"Nilai_{selected_sheet_1}", "-")
+  )
 with col_b:
-  st.metric(f"{selected_sheet_2}", student_data.get(f"Nilai_{selected_sheet_2}", "-"))
+  st.metric(
+      f"{selected_sheet_2}", student_data.get(f"Nilai_{selected_sheet_2}", "-")
+  )
 with col_c:
-  st.metric(f"{selected_sheet_3}", student_data.get(f"Nilai_{selected_sheet_3}", "-"))
+  st.metric(
+      f"{selected_sheet_3}", student_data.get(f"Nilai_{selected_sheet_3}", "-")
+  )
