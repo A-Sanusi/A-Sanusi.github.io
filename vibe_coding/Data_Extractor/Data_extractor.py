@@ -35,4 +35,5 @@ selected_columns = [
 
 df_merged = df_siswa[selected_columns]
 df_merged.index = range(1, len(df_merged) + 1)
+df_merged = df_merged.astype(object).fillna("-")
 st.dataframe(df_merged)
