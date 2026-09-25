@@ -38,7 +38,6 @@ def process_database(uploaded_file):
     df_merged = df_merged.astype(object).fillna("-")
     return df_merged
 
-
 def process_kehadiran(uploaded_file):
     print(f"Coming Soon")
 
@@ -73,42 +72,9 @@ with tab_db:
 
 # 2. TAB KEHADIRAN
 with tab_kehadiran:
-    st.header("Ekstrak Kehadiran")
-    uploaded_kehadiran = st.file_uploader(
-        "Upload File Excel Kehadiran",
-        type=["xlsx", "xls", "xlsm"],
-        key="uploader_kehadiran",
-    )
-
-    if uploaded_kehadiran is not None:
-        df_result = process_kehadiran(uploaded_kehadiran)
-        st.dataframe(df_result, use_container_width=True)
-
-        excel_bytes = convert_df_to_excel(df_result, sheet_name="Kehadiran")
-        st.download_button(
-            label="Download Kehadiran",
-            data=excel_bytes,
-            file_name="Kehadiran.xlsx",
-            key="download_kehadiran",
-        )
+    print(f"Coming Soon")
 
 # 3. TAB BINSIK
 with tab_binsik:
-    st.header("Ekstrak Binsik")
-    uploaded_binsik = st.file_uploader(
-        "Upload File Excel Binsik",
-        type=["xlsx", "xls", "xlsm"],
-        key="uploader_binsik",
-    )
+    print(f"Coming Soon")
 
-    if uploaded_binsik is not None:
-        df_result = process_binsik(uploaded_binsik)
-        st.dataframe(df_result, use_container_width=True)
-
-        excel_bytes = convert_df_to_excel(df_result, sheet_name="Binsik")
-        st.download_button(
-            label="Download Binsik",
-            data=excel_bytes,
-            file_name="Binsik.xlsx",
-            key="download_binsik",
-        )
