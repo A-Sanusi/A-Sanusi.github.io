@@ -36,7 +36,7 @@ selected_columns = [
 df_merged = df_siswa[selected_columns]
 df_merged.index = range(1, len(df_merged) + 1)
 df_merged = df_merged.astype(object).fillna("-")
-st.dataframe(df_merged)
+st.dataframe(df_merged, use_container_width=True)
 
 # Export Excel
 def convert_df_to_excel(df):
@@ -45,7 +45,6 @@ def convert_df_to_excel(df):
         df.to_excel(writer, index=True, sheet_name="Database")
     return output.getvalue()
 excel_bytes = convert_df_to_excel(df_merged)
-st.dataframe(df_merged, use_container_width=True)
 
 st.download_button(
     label="Download Database",
