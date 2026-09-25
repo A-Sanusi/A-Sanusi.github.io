@@ -6,7 +6,7 @@ import streamlit as st
 
 st.set_page_config(page_title="Ekstrak Data", layout="wide")
 st.link_button("Menu", "https://a-sanusi.github.io/vibe_coding/vibe_coding.html")
-st.title("Ekstrak Data 📊")
+st.title("Ekstrak Data")
 
 
 # --- HELPER FUNCTIONS ---
@@ -15,7 +15,6 @@ def convert_df_to_excel(df, sheet_name="Sheet1"):
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=True, sheet_name=sheet_name)
     return output.getvalue()
-
 
 # --- EXTRACTION FUNCTIONS ---
 def process_database(uploaded_file):
@@ -38,13 +37,13 @@ def process_database(uploaded_file):
     df_merged = df_merged.astype(object).fillna("-")
     return df_merged
 
-
 # --- NAVIGATION TABS ---
-tab_db, tab_to, tab_binsik = st.tabs(
+tab_db, tab_to, tab_kehadiran, tab_binsik = st.tabs(
     [
         "🔴 Ekstrak Database",
-        "🟣 Ekstrak Nilai TO",
-        "🔴 Ekstrak Nilai Binsik (coming soon)",
+        "🟣 Ekstrak Nilai TO TKA",
+        "🔴 Ekstrak Absensi (coming soon)"
+        "🟣 Ekstrak Nilai Binsik (coming soon)",
     ]
 )
 
@@ -214,38 +213,16 @@ with tab_to:
             key="download_to",
         )
 
-        # 4. Detail Nilai Per Siswa
-        st.divider()
-        st.subheader("Detail Nilai Per Siswa")
-        selected_student = st.selectbox(
-            "Pilih Nama Siswa:",
-            df_hasil[nama_siswa_col].unique(),
-            key="student_detail_select",
-        )
-        student_data = df_hasil[
-            df_hasil[nama_siswa_col] == selected_student
-        ].iloc[0]
-
-        col_a, col_b, col_c = st.columns(3)
-        with col_a:
-            st.metric(
-                f"{selected_sheet_1}",
-                student_data.get(f"Nilai_{selected_sheet_1}", "-"),
-            )
-        with col_b:
-            st.metric(
-                f"{selected_sheet_2}",
-                student_data.get(f"Nilai_{selected_sheet_2}", "-"),
-            )
-        with col_c:
-            st.metric(
-                f"{selected_sheet_3}",
-                student_data.get(f"Nilai_{selected_sheet_3}", "-"),
-            )
+# ==========================================
+# 3. TAB ABSENSI
+# ==========================================
+with tab_kehadiran:
+    st.header("Ekstrak Kehadiran")
+    st.info("Coming Soon")
 
 # ==========================================
-# 3. TAB BINSIK
+# 4. TAB BINSIK
 # ==========================================
 with tab_binsik:
     st.header("Ekstrak Nilai Binsik")
-    st.info("🚧 Fitur ini sedang dalam pengembangan (Coming Soon).")
+    st.info("Coming Soon")
