@@ -78,6 +78,12 @@ for sheet in target_sheets:
         )
         df_sub = df_sub.rename(columns={nilai_TO_col: f"Nilai_{sheet}"})
 
+                # Ambil kolom kunci dan nilai, lalu hapus duplikasi jika ada
+        df_sub_2 = df_nilai_raw_2[["key_match", kategori_TO_col]].drop_duplicates(
+            subset=["key_match"]
+        )
+        df_sub_2 = df_sub_2.rename(columns={kategori_TO_col: f"Kategori_{sheet}"})
+        
         # Gabungkan ke DataFrame utama berdasarkan kunci
         df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
 
