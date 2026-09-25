@@ -5,14 +5,13 @@ import scipy.stats as stats
 import streamlit as st
 
 st.set_page_config(page_title="Skoring IRT 3PL", layout="wide")
-st.title("Skoring IRT (3PL Model - EAP)")
+st.title("Skoring IRT")
 
 D = 1.702
 TARGET_MEAN = 500.0
 TARGET_SD = 75.0
 MIN_SCORE = 200.0
 MAX_SCORE = 800.0
-
 
 def clean_question_id(series_or_columns):
     """Normalize Question IDs for robust matching."""
@@ -93,7 +92,6 @@ X = (
     .values
 )
 
-
 # --- 4. Vectorized 3PL EAP Scoring Function ---
 def score_eap_3pl(X, a, b, c, D=1.702, grid_points=101):
     theta_grid = np.linspace(-4.0, 4.0, grid_points)
@@ -124,9 +122,7 @@ def score_eap_3pl(X, a, b, c, D=1.702, grid_points=101):
     se_eap = np.sqrt(
         np.sum(posterior_norm * ((theta_grid[None, :] - theta_eap[:, None]) ** 2), axis=1)
     )
-
     return theta_eap, se_eap
-
 
 # --- 5. Calculation & Display ---
 st.divider()
