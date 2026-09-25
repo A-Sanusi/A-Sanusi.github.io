@@ -10,17 +10,17 @@ st.title("TRIM Try Out")
 col1, col2 = st.columns(2)
 
 with col1:
-  uploaded_file = st.file_uploader(
-      "Upload File Excel Nama Siswa", type=["xlsx", "xls", "xlsm"]
-  )
+    uploaded_file = st.file_uploader(
+        "Upload File Excel Nama Siswa", type=["xlsx", "xls", "xlsm"]
+    )
 
 with col2:
-  uploaded_file_2 = st.file_uploader(
-      "Upload File Try Out", type=["xlsx", "xls", "xlsm"]
-  )
+    uploaded_file_2 = st.file_uploader(
+        "Upload File Try Out", type=["xlsx", "xls", "xlsm"]
+    )
 
 if uploaded_file is None or uploaded_file_2 is None:
-  st.stop()
+    st.stop()
 
 # 1. Baca data siswa
 excel_file = pd.ExcelFile(uploaded_file)
@@ -57,43 +57,42 @@ target_sheets = [selected_sheet_1, selected_sheet_2, selected_sheet_3]
 df_hasil = df_siswa[[nama_siswa_col, nama_akun_col, "key_match"]].copy()
 
 for sheet in target_sheets:
-  if sheet in excel_file_2.sheet_names:
-    # Baca data nilai per sheet
-    df_nilai_raw = pd.read_excel(
-        uploaded_file_2, sheet_name=sheet, header=7
-    ).dropna(how="all")
+    if sheet in excel_file_2.sheet_names:
+        # Baca data nilai per sheet
+        df_nilai_raw = pd.read_excel(
+            uploaded_file_2, sheet_name=sheet, header=7
+        ).dropna(how="all")
 
-    nama_akun_2_col = df_nilai_raw.columns[1]  # Kolom Nama Siswa/Akun
-    nilai_TO_col = df_nilai_raw.columns[4]  # Kolom Nilai
+        nama_akun_2_col = df_nilai_raw.columns[1]  # Kolom Nama Siswa/Akun
+        nilai_TO_col = df_nilai_raw.columns[4]  # Kolom Nilai
 
-    # Buat kunci pencocokan
-    df_nilai_raw["key_match"] = (
-        df_nilai_raw[nama_akun_2_col].astype(str).str.strip().str.lower()
-    )
-    if df_nilai_raw["key_match"] is None:
-      df_Nilai_raw["key_match"] == print(f"-")
-    
-    # Ambil kolom kunci dan nilai, lalu hapus duplikasi jika ada
-    df_sub = df_nilai_raw[["key_match", nilai_TO_col]].drop_duplicates(
-        subset=["key_match"]
-    )
-    df_sub = df_sub.rename(columns={nilai_TO_col: f"Nilai_{sheet}"})
+        # Buat kunci pencocokan
+        df_nilai_raw["key_match"] = (
+            df_nilai_raw[nama_akun_2_col].astype(str).str.strip().str.lower()
+        )
+        
+        # Ambil kolom kunci dan nilai, lalu hapus duplikasi jika ada
+        df_sub = df_nilai_raw[["key_match", nilai_TO_col]].drop_duplicates(
+            subset=["key_match"]
+        )
+        df_sub = df_sub.rename(columns={nilai_TO_col: f"Nilai_{sheet}"})
 
-    # Gabungkan ke DataFrame utama berdasarkan kunci
-    df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
+        # Gabungkan ke DataFrame utama berdasarkan kunci
+        df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
 
-# Hapus kolom kunci bantu
+# Hapus kolom kunci bantu dan ganti null dengan "-"
 df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=[nama_siswa_col])
+df_hasil = df_hasil.fillna("-")
 
 # 3. Tampilkan Hasil & Fitur Export
 st.subheader("Tabel Nilai Siswa")
 
 # Fungsi untuk mengubah DataFrame ke stream Bytes Excel
 def convert_df_to_excel(df):
-  output = io.BytesIO()
-  with pd.ExcelWriter(output, engine="openpyxl") as writer:
-    df.to_excel(writer, index=False, sheet_name="Hasil Nilai TO")
-  return output.getvalue()
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Hasil Nilai TO")
+    return output.getvalue()
 
 # Konversi DataFrame ke Excel
 excel_bytes = convert_df_to_excel(df_hasil)
@@ -110,18 +109,17 @@ student_data = df_hasil[df_hasil[nama_siswa_col] == selected_student].iloc[0]
 
 col_a, col_b, col_c = st.columns(3)
 with col_a:
-  st.metric(
-      f"{selected_sheet_1}", student_data.get(f"Nilai_{selected_sheet_1}", "-")
-  )
+    st.metric(
+        f"{selected_sheet_1}", student_data.get(f"Nilai_{selected_sheet_1}", "-")
+    )
 with col_b:
-  st.metric(
-      f"{selected_sheet_2}", student_data.get(f"Nilai_{selected_sheet_2}", "-")
-  )
+    st.metric(
+        f"{selected_sheet_2}", student_data.get(f"Nilai_{selected_sheet_2}", "-")
+    )
 with col_c:
-  st.metric(
-      f"{selected_sheet_3}", student_data.get(f"Nilai_{selected_sheet_3}", "-")
-  )
-
+    st.metric(
+        f"{selected_sheet_3}", student_data.get(f"Nilai_{selected_sheet_3}", "-")
+    )
 
 # Tombol Download Excel
 st.download_button(
