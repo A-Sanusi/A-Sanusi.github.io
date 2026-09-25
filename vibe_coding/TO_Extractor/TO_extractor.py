@@ -93,8 +93,8 @@ student_data = df_hasil[df_hasil[nama_siswa_col] == selected_student].iloc[0]
 
 col_a, col_b, col_c = st.columns(3)
 with col_a:
-  st.metric("1", student_data.get(f"Nilai_{selected_sheet_1}", "-"))
+  st.metric(f"{selected_sheet_1}", student_data.get(f"Nilai_{selected_sheet_1}", "-"))
 with col_b:
-  st.metric("2", student_data.get(f"Nilai_{selected_sheet_2}", "-"))
+  st.metric(f"{selected_sheet_2}", student_data.get(f"Nilai_{selected_sheet_2}", "-"))
 with col_c:
-  st.metric("3", student_data.get(f"Nilai_{selected_sheet_3}", "-"))
+  st.metric(f"{selected_sheet_3}", student_data.get(f"Nilai_{selected_sheet_3}", "-"))
