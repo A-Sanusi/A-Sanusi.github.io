@@ -5,6 +5,7 @@ import scipy.stats as stats
 import streamlit as st
 
 st.set_page_config(page_title="Ekstrak Nilai TO 🟣", layout="wide")
+st.link_button("Menu", "https://a-sanusi.github.io/vibe_coding/vibe_coding.html")
 st.title("Nilai TO kini ada Ekstraknya 🟣")
 
 col1, col2 = st.columns(2)
