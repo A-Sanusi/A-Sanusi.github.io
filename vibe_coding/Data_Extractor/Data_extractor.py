@@ -43,12 +43,21 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
     df_siswa_raw = pd.read_excel(uploaded_siswa, sheet_name=sheet_siswa, header=0)
     df_siswa = df_siswa_raw.dropna(how="all").copy()
 
+    # Clean header whitespace to avoid trailing-space KeyError
+    df_siswa.columns = df_siswa.columns.str.strip()
+
     selected_columns = [
         "NAMA SISWA",
         "NAMA AKUN TO"
     ]
-    
-    df_hasil = df_siswa[selected_columns]
+
+    # Generate key_match using explicit column name
+    df_siswa["key_match"] = (
+        df_siswa["NAMA AKUN TO"].astype(str).str.strip().str.lower()
+    )
+
+    # Retain selected columns + key_match for merging
+    df_hasil = df_siswa[selected_columns + ["key_match"]].copy()
 
     # 2. Extract scores from chosen subtest sheets
     excel_to = pd.ExcelFile(uploaded_to)
@@ -95,7 +104,7 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
 
     # 3. Clean final result DataFrame
     df_hasil = df_hasil.drop(columns=["key_match"]).dropna(
-        subset=[nama_siswa_col]
+        subset=["NAMA SISWA"]
     )
     df_hasil = df_hasil.astype(object).fillna("-")
     df_hasil.index = range(1, len(df_hasil) + 1)
