@@ -108,7 +108,6 @@ df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=[nama_siswa_col])
 
 # Convert to object before fillna to accept "-" alongside integers
 df_hasil = df_hasil.astype(object).fillna("-")
-df_hasil.index = range(1, len(df_hasil) + 1)
 df_hasil.insert(0, "No", range(1, len(df_hasil) + 1))
 
 # 3. Tampilkan Hasil & Fitur Export
