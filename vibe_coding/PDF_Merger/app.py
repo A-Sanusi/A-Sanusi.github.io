@@ -29,7 +29,7 @@ uploaded_files = st.file_uploader(
     "Pilih file", type=["pdf"], accept_multiple_files=True
 )
 
-if uploaded_file is None:
+if uploaded_files is None:
     st.info("Silakan upload file Excel untuk melanjutkan.")
     st.stop()
 
