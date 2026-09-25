@@ -64,7 +64,7 @@ for sheet in target_sheets:
         ).dropna(how="all")
 
         nama_akun_2_col = df_nilai_raw.columns[1]  # Kolom Nama Siswa/Akun
-        Total_Benar_TO_col = round(df_nilai_raw.columns[3]) #Kolom Jumlah Benar
+        Total_Benar_TO_col = df_nilai_raw.columns[3] #Kolom Jumlah Benar
         nilai_TO_col = df_nilai_raw.columns[4]  # Kolom Nilai
         kategori_TO_col = df_nilai_raw.columns[5] #Kategori Nilai
         
@@ -86,8 +86,8 @@ for sheet in target_sheets:
         )
         df_sub_2 = df_sub_2.rename(columns={kategori_TO_col: f"Kategori_{sheet}"})
         
-        df_sub_3 = df_nilai_raw[["key_match", Total_Benar_TO_col]].drop_duplicates(
-            subset=["key_match"]
+        df_sub_3 = round(df_nilai_raw[["key_match", Total_Benar_TO_col]].drop_duplicates(
+            subset=["key_match"])
         )
         df_sub_3 = df_sub_3.rename(columns={Total_Benar_TO_col: f"Jumlah_Nilai_Benar_{sheet}"})
                 
