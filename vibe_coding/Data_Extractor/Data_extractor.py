@@ -16,7 +16,6 @@ def convert_df_to_excel(df, sheet_name="Sheet1"):
         df.to_excel(writer, index=True, sheet_name=sheet_name)
     return output.getvalue()
 
-
 # --- EXTRACTION FUNCTIONS FOR EACH BUTTON/OPTION ---
 def process_database(uploaded_file):
     df_siswa_raw = pd.read_excel(uploaded_file, sheet_name="DATA BASE")
@@ -57,7 +56,8 @@ with tab_db:
         type=["xlsx", "xls", "xlsm"],
         key="uploader_db",
     )
-
+    if uploaded_db is None:
+        st.info("Silakan masukkan data Excel")
     if uploaded_db is not None:
         df_result = process_database(uploaded_db)
         st.dataframe(df_result, use_container_width=True)
