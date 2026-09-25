@@ -117,11 +117,10 @@ st.subheader("Tabel Nilai Siswa")
 def convert_df_to_excel(df):
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="Hasil Nilai TO")
+        df.to_excel(writer, index=True, sheet_name="Hasil Nilai TO")
     return output.getvalue()
 
 # Konversi DataFrame ke Excel
-df_hasil.insert(0, "No", range(1, len(df_hasil) + 1))
 excel_bytes = convert_df_to_excel(df_hasil)
 
 st.dataframe(df_hasil, use_container_width=True)
