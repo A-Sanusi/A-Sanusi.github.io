@@ -63,35 +63,42 @@ for sheet in target_sheets:
             uploaded_file_2, sheet_name=sheet, header=7
         ).dropna(how="all")
 
-        nama_akun_2_col = df_nilai_raw.columns[1]  # Kolom Nama Siswa/Akun
-        Total_Benar_TO_col = df_nilai_raw.columns[3] #Kolom Jumlah Benar
-        nilai_TO_col = df_nilai_raw.columns[4]  # Kolom Nilai
-        kategori_TO_col = df_nilai_raw.columns[5] #Kategori Nilai
+        nama_akun_2_col = df_nilai_raw.columns[1]   # Kolom Nama Siswa/Akun
+        Total_Benar_TO_col = df_nilai_raw.columns[3] # Kolom Jumlah Benar
+        nilai_TO_col = df_nilai_raw.columns[4]       # Kolom Nilai
+        kategori_TO_col = df_nilai_raw.columns[5]    # Kategori Nilai
         
-
         # Buat kunci pencocokan
         df_nilai_raw["key_match"] = (
             df_nilai_raw[nama_akun_2_col].astype(str).str.strip().str.lower()
         )
         
-        # Ambil kolom kunci dan nilai, lalu hapus duplikasi jika ada
+        # Ambil Nilai
         df_sub = df_nilai_raw[["key_match", nilai_TO_col]].drop_duplicates(
             subset=["key_match"]
         )
         df_sub = df_sub.rename(columns={nilai_TO_col: f"Nilai_{sheet}"})
 
-                # Ambil kolom kunci dan nilai, lalu hapus duplikasi jika ada
+        # Ambil Kategori
         df_sub_2 = df_nilai_raw[["key_match", kategori_TO_col]].drop_duplicates(
             subset=["key_match"]
         )
         df_sub_2 = df_sub_2.rename(columns={kategori_TO_col: f"Kategori_{sheet}"})
         
+        # Ambil & Round Jumlah Benar (Dibulatkan tanpa desimal)
         df_sub_3 = df_nilai_raw[["key_match", Total_Benar_TO_col]].drop_duplicates(
             subset=["key_match"]
+        ).copy()
+        
+        df_sub_3[Total_Benar_TO_col] = (
+            pd.to_numeric(df_sub_3[Total_Benar_TO_col], errors="coerce")
+            .round()
+            .astype("Int64")
         )
+        
         df_sub_3 = df_sub_3.rename(columns={Total_Benar_TO_col: f"Jumlah_Nilai_Benar_{sheet}"})
-                
-        # Gabungkan ke DataFrame utama berdasarkan kunci
+        
+        # Gabungkan ke DataFrame utama
         df_hasil = pd.merge(df_hasil, df_sub_3, on="key_match", how="left")
         df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
         df_hasil = pd.merge(df_hasil, df_sub_2, on="key_match", how="left")
@@ -99,7 +106,6 @@ for sheet in target_sheets:
 # Hapus kolom kunci bantu dan ganti null dengan "-"
 df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=[nama_siswa_col])
 df_hasil = df_hasil.fillna("-")
-df_hasil[Total_Benar_TO_col] = df_hasil[Total_Benar_TO_col].round()
 
 # 3. Tampilkan Hasil & Fitur Export
 st.subheader("Tabel Nilai Siswa")
