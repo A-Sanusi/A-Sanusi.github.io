@@ -70,7 +70,9 @@ for sheet in target_sheets:
     df_nilai_raw["key_match"] = (
         df_nilai_raw[nama_akun_2_col].astype(str).str.strip().str.lower()
     )
-
+    if df_nilai_raw["key_match"] is None:
+      df_Nilai_raw["key_match"] == print(f"-")
+    
     # Ambil kolom kunci dan nilai, lalu hapus duplikasi jika ada
     df_sub = df_nilai_raw[["key_match", nilai_TO_col]].drop_duplicates(
         subset=["key_match"]
@@ -86,14 +88,12 @@ df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=[nama_siswa_col])
 # 3. Tampilkan Hasil & Fitur Export
 st.subheader("Tabel Nilai Siswa")
 
-
 # Fungsi untuk mengubah DataFrame ke stream Bytes Excel
 def convert_df_to_excel(df):
   output = io.BytesIO()
   with pd.ExcelWriter(output, engine="openpyxl") as writer:
     df.to_excel(writer, index=False, sheet_name="Hasil Nilai TO")
   return output.getvalue()
-
 
 # Konversi DataFrame ke Excel
 excel_bytes = convert_df_to_excel(df_hasil)
