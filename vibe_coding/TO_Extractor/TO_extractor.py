@@ -85,7 +85,7 @@ for sheet in target_sheets:
         )
         df_sub_2 = df_sub_2.rename(columns={kategori_TO_col: f"Kategori_{sheet}"})
         
-        # Ambil & Round Jumlah Benar (Dibulatkan tanpa desimal)
+        # Ambil & Round Jumlah Benar
         df_sub_3 = df_nilai_raw[["key_match", Total_Benar_TO_col]].drop_duplicates(
             subset=["key_match"]
         ).copy()
@@ -105,7 +105,9 @@ for sheet in target_sheets:
         
 # Hapus kolom kunci bantu dan ganti null dengan "-"
 df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=[nama_siswa_col])
-df_hasil = df_hasil.fillna("-")
+
+# Convert to object before fillna to accept "-" alongside integers
+df_hasil = df_hasil.astype(object).fillna("-")
 
 # 3. Tampilkan Hasil & Fitur Export
 st.subheader("Tabel Nilai Siswa")
