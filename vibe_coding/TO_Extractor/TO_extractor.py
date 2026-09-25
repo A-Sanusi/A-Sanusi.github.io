@@ -98,14 +98,6 @@ def convert_df_to_excel(df):
 # Konversi DataFrame ke Excel
 excel_bytes = convert_df_to_excel(df_hasil)
 
-# Tombol Download Excel
-st.download_button(
-    label="📥 Download Hasil Nilai (Excel)",
-    data=excel_bytes,
-    file_name="Hasil_Nilai_TryOut.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-)
-
 st.dataframe(df_hasil, use_container_width=True)
 
 # 4. Fitur Tambahan: Pilih Siswa untuk Melihat Detail Nilai
@@ -129,3 +121,11 @@ with col_c:
   st.metric(
       f"{selected_sheet_3}", student_data.get(f"Nilai_{selected_sheet_3}", "-")
   )
+
+
+# Tombol Download Excel
+st.download_button(
+    label="Download Hasil Nilai",
+    data=excel_bytes,
+    file_name="Hasil_Nilai_TryOut.xlsx",
+)
