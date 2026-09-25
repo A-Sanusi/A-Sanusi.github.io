@@ -43,13 +43,12 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
     df_siswa_raw = pd.read_excel(uploaded_siswa, sheet_name=sheet_siswa, header=0)
     df_siswa = df_siswa_raw.dropna(how="all").copy()
 
-    nama_siswa_col = df_siswa.columns[1]
-    nama_akun_col = df_siswa.columns[2]
-
-    df_siswa["key_match"] = (
-        df_siswa[nama_akun_col].astype(str).str.strip().str.lower()
-    )
-    df_hasil = df_siswa[[nama_siswa_col, nama_akun_col, "key_match"]].copy()
+    selected_columns = [
+        "NAMA SISWA"
+        "NAMA AKUN TO"
+    ]
+    
+    df_hasil = df_siswa[selected_columns]
 
     # 2. Extract scores from chosen subtest sheets
     excel_to = pd.ExcelFile(uploaded_to)
