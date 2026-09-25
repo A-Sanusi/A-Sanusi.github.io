@@ -38,10 +38,12 @@ def process_database(uploaded_file):
     return df_merged
 
 # --- NAVIGATION TABS ---
-tab_db, tab_to, tab_kehadiran, tab_binsik = st.tabs(
+tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs(
     [
         "🔴 Ekstrak Database",
         "🟣 Ekstrak Nilai TO TKA",
+        "🔴 Ekstrak Nilai TO SKD (coming soon)",
+        "🟣 Ekstrak Nilai TO UTBK (coming soon)",
         "🔴 Ekstrak Absensi (coming soon)",
         "🟣 Ekstrak Nilai Binsik (coming soon)",
     ]
@@ -75,7 +77,7 @@ with tab_db:
 # ==========================================
 # 2. TAB NILAI TRY OUT
 # ==========================================
-with tab_to:
+with tab_to_tka:
     st.header("Nilai TO kini ada Ekstraknya 🟣")
 
     col1, col2 = st.columns(2)
@@ -212,16 +214,29 @@ with tab_to:
             file_name="Hasil_Nilai_Try_Out.xlsx",
             key="download_to",
         )
+# ==========================================
+# 3. TAB TO SKD
+# ==========================================
+with tab_to_skd:
+    st.header("Ekstrak Kehadiran")
+    st.info("Coming Soon")
 
 # ==========================================
-# 3. TAB ABSENSI
+# 4. TAB TO UTBK
+# ==========================================
+with tab_to_utbk:
+    st.header("Ekstrak Kehadiran")
+    st.info("Coming Soon")
+
+# ==========================================
+# 5. TAB ABSENSI
 # ==========================================
 with tab_kehadiran:
     st.header("Ekstrak Kehadiran")
     st.info("Coming Soon")
 
 # ==========================================
-# 4. TAB BINSIK
+# 6. TAB BINSIK
 # ==========================================
 with tab_binsik:
     st.header("Ekstrak Nilai Binsik")
