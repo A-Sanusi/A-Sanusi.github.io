@@ -29,6 +29,10 @@ uploaded_files = st.file_uploader(
     "Pilih file", type=["pdf"], accept_multiple_files=True
 )
 
+if uploaded_file is None:
+    st.info("Silakan upload file Excel untuk melanjutkan.")
+    st.stop()
+
 if uploaded_files:
     if st.button("Satukan PDF", type="primary"):
         student_files = defaultdict(list)
