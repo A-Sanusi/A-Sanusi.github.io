@@ -98,3 +98,15 @@ with col_b:
   st.metric(f"{selected_sheet_2}", student_data.get(f"Nilai_{selected_sheet_2}", "-"))
 with col_c:
   st.metric(f"{selected_sheet_3}", student_data.get(f"Nilai_{selected_sheet_3}", "-"))
+
+buffer = io.BytesIO()
+with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+    df_results.to_excel(writer, sheet_name="HASIL TO")
+
+output_filename = f"{uploaded_file.name.rsplit('.', 1)[0]} HASIL TO.xlsx"
+
+st.download_button(
+    label="Download Hasil Excel",
+    data=buffer.getvalue(),
+    file_name=output_filename,
+)
