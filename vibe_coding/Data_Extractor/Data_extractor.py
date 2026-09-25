@@ -20,7 +20,6 @@ if uploaded_file is None:
 excel_file = pd.ExcelFile(uploaded_file)
 df_siswa_raw = pd.read_excel(uploaded_file, sheet_name="DATA BASE")
 df_siswa = df_siswa_raw.dropna(how="all").copy()
-df_siswa.index = range(1, len(df_hasil) + 1)
 
 # Kolom
 selected_columns = [
@@ -35,4 +34,5 @@ selected_columns = [
 ]
 
 df_merged = df_siswa[selected_columns]
+df_merged.index = range(1, len(df_hasil) + 1)
 st.dataframe(df_merged)
