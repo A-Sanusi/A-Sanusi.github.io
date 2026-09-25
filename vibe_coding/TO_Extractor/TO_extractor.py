@@ -21,6 +21,7 @@ with col2:
     )
 
 if uploaded_file is None or uploaded_file_2 is None:
+    st.info("Silakan upload kedua file Excel untuk melanjutkan.")
     st.stop()
 
 # 1. Baca data siswa
