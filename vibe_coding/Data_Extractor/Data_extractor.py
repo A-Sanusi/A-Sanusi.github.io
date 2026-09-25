@@ -110,7 +110,7 @@ with tab_to_tka:
         )
         df_siswa = df_siswa_raw.dropna(how="all").copy()
 
-        nama_siswa_col = df_siswa.columns[1]
+        nama_siswa_col = df_siswa["NAMA SISWA"]
         nama_akun_col = df_siswa.columns[2]
         df_siswa["key_match"] = (
             df_siswa[nama_akun_col].astype(str).str.strip().str.lower()
