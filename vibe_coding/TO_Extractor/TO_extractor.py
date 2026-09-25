@@ -100,6 +100,9 @@ for sheet in target_sheets:
 df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=[nama_siswa_col])
 df_hasil = df_hasil.fillna("-")
 
+df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=[Total_Benar_TO_col])
+df_hasil = round(df_hasil)
+
 # 3. Tampilkan Hasil & Fitur Export
 st.subheader("Tabel Nilai Siswa")
 
