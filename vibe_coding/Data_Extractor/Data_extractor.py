@@ -6,14 +6,12 @@ st.set_page_config(page_title="Ekstrak Data", layout="wide")
 st.link_button("Menu", "https://a-sanusi.github.io/vibe_coding/vibe_coding.html")
 st.title("Ekstrak Data")
 
-
 # --- HELPER FUNCTIONS ---
 def convert_df_to_excel(df, sheet_name="Sheet1"):
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=True, sheet_name=sheet_name)
     return output.getvalue()
-
 
 # --- EXTRACTION FUNCTIONS ---
 def process_database(uploaded_file):
@@ -37,14 +35,12 @@ def process_database(uploaded_file):
     df_merged = df_merged.astype(object).fillna("-")
     return df_merged
 
-
 def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
     """Processes and merges Try Out scores with student data."""
     # 1. Load student list
     df_siswa_raw = pd.read_excel(uploaded_siswa, sheet_name=sheet_siswa, header=0)
     df_siswa = df_siswa_raw.dropna(how="all").copy()
     df_siswa.columns = df_siswa.columns.astype(str).str.strip()
-
     selected_siswa_cols = ["NAMA SISWA", "NAMA AKUN TO"]
 
     # Detect student account column dynamically
@@ -88,7 +84,6 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
 
             # Filter present score columns
             available_score_cols = [c for c in selected_to_cols if c in df_nilai_raw.columns]
-
             df_sub = df_nilai_raw[
                 ["key_match"] + available_score_cols
             ].drop_duplicates(subset=["key_match"]).copy()
@@ -118,7 +113,6 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
 
     return df_hasil
 
-
 # --- NAVIGATION TABS ---
 tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs(
     [
@@ -131,9 +125,7 @@ tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs
     ]
 )
 
-# ==========================================
-# 1. TAB DATABASE
-# ==========================================
+#Tab_database
 with tab_db:
     st.header("Ekstrak Database")
     uploaded_db = st.file_uploader(
@@ -156,11 +148,9 @@ with tab_db:
             key="download_db",
         )
 
-# ==========================================
-# 2. TAB NILAI TRY OUT
-# ==========================================
+#Tab_TKA
 with tab_to_tka:
-    st.header("Ekstrak Nilai TO TKA 🟣")
+    st.header("TO TKA Kini ada Ekstraknya 🟣")
 
     col1, col2 = st.columns(2)
     with col1:
