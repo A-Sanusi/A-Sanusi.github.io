@@ -85,6 +85,7 @@ for sheet in target_sheets:
         df_sub_2 = df_sub_2.rename(columns={kategori_TO_col: f"Kategori_{sheet}"})
         
         # Gabungkan ke DataFrame utama berdasarkan kunci
+        df_hasil = pd.merge(df_hasil, df_sub_2, on="key_match", how="left")
         df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
 
 # Hapus kolom kunci bantu dan ganti null dengan "-"
