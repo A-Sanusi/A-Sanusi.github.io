@@ -121,9 +121,10 @@ def convert_df_to_excel(df):
     return output.getvalue()
 
 # Konversi DataFrame ke Excel
-excel_bytes = convert_df_to_excel(df_hasil)
+df_hasil_2 = pd.merge(df_hasil.index, df_hasil, on="key_match", how="left")
+excel_bytes = convert_df_to_excel(df_hasil_2)
 
-st.dataframe(df_hasil, use_container_width=True)
+st.dataframe(df_hasil_2, use_container_width=True)
 
 # 4. Fitur Tambahan: Pilih Siswa untuk Melihat Detail Nilai
 st.subheader("Detail Nilai Per Siswa")
