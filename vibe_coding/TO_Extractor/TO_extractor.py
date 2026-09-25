@@ -108,7 +108,7 @@ df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=[nama_siswa_col])
 
 # Convert to object before fillna to accept "-" alongside integers
 df_hasil = df_hasil.astype(object).fillna("-")
-df_hasil.insert(0, "No", range(1, len(df_hasil) + 1))
+df_hasil.index = range(1, len(df_hasil) + 1)
 
 # 3. Tampilkan Hasil & Fitur Export
 st.subheader("Tabel Nilai Siswa")
@@ -121,6 +121,7 @@ def convert_df_to_excel(df):
     return output.getvalue()
 
 # Konversi DataFrame ke Excel
+df_hasil.insert(0, "No", range(1, len(df_hasil) + 1))
 excel_bytes = convert_df_to_excel(df_hasil)
 
 st.dataframe(df_hasil, use_container_width=True)
