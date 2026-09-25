@@ -5,6 +5,7 @@ import scipy.stats as stats
 import streamlit as st
 
 st.set_page_config(page_title="Skoring IRT 3PL", layout="wide")
+st.link_button("Menu", "https://a-sanusi.github.io/vibe_coding/vibe_coding.html")
 st.title("Skoring IRT")
 
 D = 1.702
