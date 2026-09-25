@@ -94,7 +94,7 @@ for sheet in target_sheets:
                 
         # Gabungkan ke DataFrame utama berdasarkan kunci
         df_hasil = pd.merge(df_hasil, df_sub_3, on="key_match", how="left")
-        df_hasil = pd.merge(df_hasil, df_sub_1, on="key_match", how="left")
+        df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
         df_hasil = pd.merge(df_hasil, df_sub_2, on="key_match", how="left")
         
 # Hapus kolom kunci bantu dan ganti null dengan "-"
