@@ -40,22 +40,14 @@ def process_database(uploaded_file):
 
 
 def process_kehadiran(uploaded_file):
-    # Customize this function for Kehadiran sheet/columns
-    df_raw = pd.read_excel(uploaded_file)
-    df_processed = df_raw.dropna(how="all").fillna("-")
-    return df_processed
-
+    print(f"Coming Soon")
 
 def process_binsik(uploaded_file):
-    # Customize this function for Binsik sheet/columns
-    df_raw = pd.read_excel(uploaded_file)
-    df_processed = df_raw.dropna(how="all").fillna("-")
-    return df_processed
-
+    print(f"Coming Soon")
 
 # --- NAVIGATION BUTTONS / TABS ---
 tab_db, tab_kehadiran, tab_binsik = st.tabs(
-    ["📁 Ekstrak Database", "📅 Ekstrak Kehadiran", "🏃 Ekstrak Binsik"]
+    ["🔴 Ekstrak Database", "🔴 Ekstrak Kehadiran (coming soon)", "🔴 Ekstrak Nilai Binsik (coming soon)"]
 )
 
 # 1. TAB DATABASE
