@@ -22,7 +22,7 @@ def extract_student_name(filename: str) -> str:
 
 
 st.set_page_config(page_title="PDF Merger")
-st.link_button("Menu", "https://a-sanusi.github.io/vibe_coding/vibe_coding.html")
+st.link_button("Menu", "https://a-sanusi.github.io/vibe_coding/vibe_coding.html", target="_self")
 st.title("PDF Merger (biar cepet selesai hehe)")
 
 uploaded_files = st.file_uploader(
