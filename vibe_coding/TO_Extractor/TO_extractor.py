@@ -41,11 +41,11 @@ df_siswa["key_match"] = (
 
 # 2. Proses pengambil nilai dari sheet sheet_siswa_1, sheet_siswa_2, sheet_siswa_3
 excel_file_2 = pd.ExcelFile(uploaded_file_2)
-selected_sheet = st.selectbox("Pilih Sheet Nama: ", excel_file_2.sheet_names, key="sheet_siswa_1")
+selected_sheet_1 = st.selectbox("Pilih Sheet Nama: ", excel_file_2.sheet_names, key="sheet_siswa_1")
 selected_sheet_2 = st.selectbox("Pilih Sheet Nama: ", excel_file_2.sheet_names, key="sheet_siswa_2")
 selected_sheet_3 = st.selectbox("Pilih Sheet Nama: ", excel_file_2.sheet_names, key="sheet_siswa_3")
 
-target_sheets = [sheet_siswa_1, sheet_siswa_2, sheet_siswa_3]
+target_sheets = [selected_sheet_1, selected_sheet_2, selected_sheet_3]
 
 # DataFrame hasil gabungan
 df_hasil = df_siswa[[nama_siswa_col, nama_akun_col, "key_match"]].copy()
