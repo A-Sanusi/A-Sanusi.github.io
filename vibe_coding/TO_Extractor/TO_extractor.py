@@ -45,7 +45,7 @@ selected_sheet = st.selectbox("Pilih Sheet Nama: ", excel_file_2.sheet_names, ke
 selected_sheet_2 = st.selectbox("Pilih Sheet Nama: ", excel_file_2.sheet_names, key="sheet_siswa_2")
 selected_sheet_3 = st.selectbox("Pilih Sheet Nama: ", excel_file_2.sheet_names, key="sheet_siswa_3")
 
-target_sheets = ["sheet_siswa_1", "sheet_siswa_2", "sheet_siswa_3"]
+target_sheets = [sheet_siswa_1, sheet_siswa_2, sheet_siswa_3]
 
 # DataFrame hasil gabungan
 df_hasil = df_siswa[[nama_siswa_col, nama_akun_col, "key_match"]].copy()
@@ -93,8 +93,8 @@ student_data = df_hasil[df_hasil[nama_siswa_col] == selected_student].iloc[0]
 
 col_a, col_b, col_c = st.columns(3)
 with col_a:
-  st.metric("sheet_siswa_1", student_data.get("Nilai_sheet_siswa_1", "-"))
+  st.metric(sheet_siswa_1, student_data.get("Nilai_sheet_siswa_1", "-"))
 with col_b:
-  st.metric("sheet_siswa_2", student_data.get("Nilai_sheet_siswa_2", "-"))
+  st.metric(sheet_siswa_2, student_data.get("Nilai_sheet_siswa_2", "-"))
 with col_c:
-  st.metric("sheet_siswa_3", student_data.get("Nilai_sheet_siswa_3", "-"))
+  st.metric(sheet_siswa_3, student_data.get("Nilai_sheet_siswa_3", "-"))
