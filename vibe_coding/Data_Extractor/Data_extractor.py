@@ -42,25 +42,20 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
     # 1. Load and prepare student data
     df_siswa_raw = pd.read_excel(uploaded_siswa, sheet_name=sheet_siswa, header=0)
     df_siswa = df_siswa_raw.dropna(how="all").copy()
-
-    # Clean header whitespace to avoid trailing-space KeyError
     df_siswa.columns = df_siswa.columns.str.strip()
 
-    selected_columns = [
-        "NAMA SISWA",
-        "NAMA AKUN TO"
-    ]
+    selected_siswa_cols = ["NAMA SISWA", "NAMA AKUN TO"]
 
-    # Generate key_match using explicit column name
+    # Generate key_match for student dataset
     df_siswa["key_match"] = (
         df_siswa["NAMA AKUN TO"].astype(str).str.strip().str.lower()
     )
 
-    # Retain selected columns + key_match for merging
-    df_hasil = df_siswa[selected_columns + ["key_match"]].copy()
+    df_hasil = df_siswa[selected_siswa_cols + ["key_match"]].copy()
 
     # 2. Extract scores from chosen subtest sheets
     excel_to = pd.ExcelFile(uploaded_to)
+    selected_to_cols = ["TOTAL BENAR", "NILAI", "KATEGORI"]
 
     for sheet in target_sheets:
         if sheet in excel_to.sheet_names:
@@ -68,34 +63,32 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
                 uploaded_to, sheet_name=sheet, header=7
             ).dropna(how="all")
 
-            nama_akun_2_col = df_nilai_raw.columns[1]
-            total_benar_col = df_nilai_raw.columns[3]
-            nilai_col = df_nilai_raw.columns[4]
-            kategori_col = df_nilai_raw.columns[5]
+            df_nilai_raw.columns = df_nilai_raw.columns.str.strip()
 
+            # Generate key_match using 'NAMA AKUN'
             df_nilai_raw["key_match"] = (
-                df_nilai_raw[nama_akun_2_col]
+                df_nilai_raw["NAMA AKUN"]
                 .astype(str)
                 .str.strip()
                 .str.lower()
             )
 
-            # Extract all three subtest fields in a single step
+            # Extract selected columns + key_match
             df_sub = df_nilai_raw[
-                ["key_match", total_benar_col, nilai_col, kategori_col]
+                ["key_match"] + selected_to_cols
             ].drop_duplicates(subset=["key_match"]).copy()
 
-            df_sub[total_benar_col] = (
-                pd.to_numeric(df_sub[total_benar_col], errors="coerce")
+            df_sub["TOTAL BENAR"] = (
+                pd.to_numeric(df_sub["TOTAL BENAR"], errors="coerce")
                 .round()
                 .astype("Int64")
             )
 
             df_sub = df_sub.rename(
                 columns={
-                    total_benar_col: f"Jumlah_Nilai_Benar_{sheet}",
-                    nilai_col: f"Nilai_{sheet}",
-                    kategori_col: f"Kategori_{sheet}",
+                    "TOTAL BENAR": f"Jumlah_Nilai_Benar_{sheet}",
+                    "NILAI": f"Nilai_{sheet}",
+                    "KATEGORI": f"Kategori_{sheet}",
                 }
             )
 
@@ -209,9 +202,6 @@ with tab_to_tka:
             key="download_to",
         )
 
-# ==========================================
-# 3–6. OTHER TABS
-# ==========================================
 with tab_to_skd:
     st.header("Ekstrak Nilai SKD")
     st.info("Coming Soon")
