@@ -218,14 +218,14 @@ with tab_to_tka:
 # 3. TAB TO SKD
 # ==========================================
 with tab_to_skd:
-    st.header("Ekstrak Kehadiran")
+    st.header("Ekstrak Nilai SKD")
     st.info("Coming Soon")
 
 # ==========================================
 # 4. TAB TO UTBK
 # ==========================================
 with tab_to_utbk:
-    st.header("Ekstrak Kehadiran")
+    st.header("Ekstrak Nilai UTBK")
     st.info("Coming Soon")
 
 # ==========================================
