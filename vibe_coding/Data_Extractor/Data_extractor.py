@@ -72,9 +72,9 @@ with tab_db:
 
 # 2. TAB KEHADIRAN
 with tab_kehadiran:
-    print(f"Coming Soon")
+    st.info("Coming Soon")
 
 # 3. TAB BINSIK
 with tab_binsik:
-    print(f"Coming Soon")
+    st.info("Coming Soon")
 
