@@ -4,8 +4,8 @@ import pandas as pd
 import scipy.stats as stats
 import streamlit as st
 
-st.set_page_config(page_title="TRIM TO", layout="wide")
-st.title("TRIM Try Out")
+st.set_page_config(page_title="Ekstrak Nilai TO 🟣", layout="wide")
+st.title("Nilai TO kini ada Ekstraknya 🟣")
 
 col1, col2 = st.columns(2)
 
