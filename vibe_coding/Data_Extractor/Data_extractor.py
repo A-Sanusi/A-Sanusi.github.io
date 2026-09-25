@@ -44,7 +44,7 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
     df_siswa = df_siswa_raw.dropna(how="all").copy()
 
     selected_columns = [
-        "NAMA SISWA"
+        "NAMA SISWA",
         "NAMA AKUN TO"
     ]
     
