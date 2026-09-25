@@ -86,8 +86,8 @@ for sheet in target_sheets:
         )
         df_sub_2 = df_sub_2.rename(columns={kategori_TO_col: f"Kategori_{sheet}"})
         
-        df_sub_3 = int(df_nilai_raw[["key_match", Total_Benar_TO_col]].drop_duplicates(
-            subset=["key_match"])
+        df_sub_3 = df_nilai_raw[["key_match", Total_Benar_TO_col]].drop_duplicates(
+            subset=["key_match"]
         )
         df_sub_3 = df_sub_3.rename(columns={Total_Benar_TO_col: f"Jumlah_Nilai_Benar_{sheet}"})
                 
