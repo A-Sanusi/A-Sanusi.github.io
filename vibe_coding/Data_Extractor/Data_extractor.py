@@ -36,47 +36,30 @@ def process_database(uploaded_file):
     df_merged = df_merged.astype(object).fillna("-")
     return df_merged
 
-
 def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
-    """Processes and merges Try Out scores with student data."""
-    # 1. Load and prepare student data
+    # 1. Load student data using simple selected_columns
     df_siswa_raw = pd.read_excel(uploaded_siswa, sheet_name=sheet_siswa, header=0)
     df_siswa = df_siswa_raw.dropna(how="all").copy()
     df_siswa.columns = df_siswa.columns.str.strip()
 
     selected_siswa_cols = ["NAMA SISWA", "NAMA AKUN TO"]
+    
+    # Extract columns & create join key
+    df_hasil = df_siswa[selected_siswa_cols].copy()
+    df_hasil["key_match"] = df_hasil["NAMA AKUN TO"].astype(str).str.strip().str.lower()
 
-    # Generate key_match for student dataset
-    df_siswa["key_match"] = (
-        df_siswa["NAMA AKUN TO"].astype(str).str.strip().str.lower()
-    )
-
-    df_hasil = df_siswa[selected_siswa_cols + ["key_match"]].copy()
-
-    # 2. Extract scores from chosen subtest sheets
+    # 2. Process score sheets
     excel_to = pd.ExcelFile(uploaded_to)
-    selected_to_cols = ["TOTAL BENAR", "NILAI", "KATEGORI"]
+    selected_to_cols = ["NAMA AKUN", "TOTAL BENAR", "NILAI", "KATEGORI"]
 
     for sheet in target_sheets:
         if sheet in excel_to.sheet_names:
-            df_nilai_raw = pd.read_excel(
-                uploaded_to, sheet_name=sheet, header=7
-            ).dropna(how="all")
-
+            df_nilai_raw = pd.read_excel(uploaded_to, sheet_name=sheet, header=7).dropna(how="all")
             df_nilai_raw.columns = df_nilai_raw.columns.str.strip()
 
-            # Generate key_match using 'NAMA AKUN'
-            df_nilai_raw["key_match"] = (
-                df_nilai_raw["NAMA AKUN TO"]
-                .astype(str)
-                .str.strip()
-                .str.lower()
-            )
-
-            # Extract selected columns + key_match
-            df_sub = df_nilai_raw[
-                ["key_match"] + selected_to_cols
-            ].drop_duplicates(subset=["key_match"]).copy()
+            # Extract selected columns
+            df_sub = df_nilai_raw[selected_to_cols].copy()
+            df_sub["key_match"] = df_sub["NAMA AKUN"].astype(str).str.strip().str.lower()
 
             df_sub["TOTAL BENAR"] = (
                 pd.to_numeric(df_sub["TOTAL BENAR"], errors="coerce")
@@ -84,27 +67,25 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
                 .astype("Int64")
             )
 
+            # Rename columns for the specific subtest sheet
             df_sub = df_sub.rename(
                 columns={
                     "TOTAL BENAR": f"Jumlah_Nilai_Benar_{sheet}",
                     "NILAI": f"Nilai_{sheet}",
                     "KATEGORI": f"Kategori_{sheet}",
                 }
-            )
+            ).drop(columns=["NAMA AKUN"])
 
-            # Single merge per subtest sheet
+            # Merge with student list
             df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
 
-    # 3. Clean final result DataFrame
-    df_hasil = df_hasil.drop(columns=["key_match"]).dropna(
-        subset=["NAMA SISWA"]
-    )
+    # 3. Clean up final table
+    df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=["NAMA SISWA"])
     df_hasil = df_hasil.astype(object).fillna("-")
     df_hasil.index = range(1, len(df_hasil) + 1)
 
     return df_hasil
-
-
+    
 # --- NAVIGATION TABS ---
 tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs(
     [
