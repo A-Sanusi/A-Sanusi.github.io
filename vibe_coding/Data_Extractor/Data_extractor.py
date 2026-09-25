@@ -42,7 +42,7 @@ tab_db, tab_to, tab_kehadiran, tab_binsik = st.tabs(
     [
         "🔴 Ekstrak Database",
         "🟣 Ekstrak Nilai TO TKA",
-        "🔴 Ekstrak Absensi (coming soon)"
+        "🔴 Ekstrak Absensi (coming soon)",
         "🟣 Ekstrak Nilai Binsik (coming soon)",
     ]
 )
