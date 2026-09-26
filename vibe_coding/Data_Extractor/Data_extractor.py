@@ -213,13 +213,11 @@ with tab_to_utbk:
 
 with tab_kehadiran:
     st.header("Ekstrak Kehadiran")
-
-    with col_kehadiran_1:
-        uploaded_siswa_2 = st.file_uploader(
-            "Upload File Excel Nama Siswa",
-            type=["xlsx", "xls", "xlsm"],
-            key="uploader_kehadiran_siswa",
-        )
+    uploaded_siswa_2 = st.file_uploader(
+        "Upload File Excel Nama Siswa",
+        type=["xlsx", "xls", "xlsm"],
+        key="uploader_kehadiran_siswa",
+    )
     
     if uploaded_siswa_2 is None:
         st.info("Silakan upload file Excel untuk melanjutkan.")
