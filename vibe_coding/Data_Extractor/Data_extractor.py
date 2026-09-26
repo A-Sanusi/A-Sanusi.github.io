@@ -260,7 +260,7 @@ with tab_kehadiran:
         for i in range(bulan_angka):
             with cols[i]:
                 selecting[selected_bulan[i]] = st.selectbox(
-                    f"Bulan {selected_bulan[i]}",
+                    f"Kehadiran Bulan {selected_bulan[i]}",
                     excel_siswa_2.sheet_names,  # Uses pd.ExcelFile sheet names
                     key=f"select_sheet_kehadiran_{i}",  # Unique key for loop
                 )
