@@ -112,8 +112,6 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
 
     return df_hasil
 
-def process_kehadiran(uploaded_siswa_2, uploaded_kehadiran, sheet_siswa_2, target_sheets_2):
-
 # --- NAVIGATION TABS ---
 tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs(
     [
