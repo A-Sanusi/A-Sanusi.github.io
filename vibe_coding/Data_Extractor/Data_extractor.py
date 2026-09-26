@@ -258,7 +258,7 @@ with tab_kehadiran:
         ]
 
         bulan_terpilih = st.selectbox(
-            "Pilih Bulan Kehadiran", selected_bulan, key="bulan_kehadiran"
+            "Pilih Bulan Rapor", selected_bulan, key="bulan_kehadiran"
         )
         bulan_angka = selected_bulan.index(bulan_terpilih) + 1
 
