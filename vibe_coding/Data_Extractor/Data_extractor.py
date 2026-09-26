@@ -213,7 +213,6 @@ with tab_to_utbk:
 
 with tab_kehadiran:
     st.header("Ekstrak Kehadiran")
-    col_kehadiran_1, col_kehadiran_2 = st.columns(2)
 
     with col_kehadiran_1:
         uploaded_siswa_2 = st.file_uploader(
@@ -221,19 +220,12 @@ with tab_kehadiran:
             type=["xlsx", "xls", "xlsm"],
             key="uploader_kehadiran_siswa",
         )
-    with col_kehadiran_2:
-        uploaded_kehadiran = st.file_uploader(
-            "Upload File Try Out",
-            type=["xlsx", "xls", "xlsm"],
-            key="uploader_kehadiran_data",
-        )
-
-    if uploaded_siswa_2 is None or uploaded_kehadiran is None:
-        st.info("Silakan upload kedua file Excel untuk melanjutkan.")
+    
+    if uploaded_siswa_2 is None:
+        st.info("Silakan upload file Excel untuk melanjutkan.")
     else:
         # 1. FIXED: Removed quotes around uploaded variables
         excel_siswa_2 = pd.ExcelFile(uploaded_siswa_2)
-        excel_kehadiran = pd.ExcelFile(uploaded_kehadiran)
 
         # 2. FIXED: Changed excel_sheet -> excel_siswa_2
         selected_sheet_siswa_2 = st.selectbox(
