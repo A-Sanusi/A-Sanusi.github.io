@@ -6,14 +6,13 @@ st.set_page_config(page_title="Ekstrak Data", layout="wide")
 st.link_button("Menu", "https://a-sanusi.github.io/vibe_coding/vibe_coding.html")
 st.title("Ekstrak Data")
 
-# --- HELPER FUNCTIONS ---
+
 def convert_df_to_excel(df, sheet_name="Sheet1"):
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=True, sheet_name=sheet_name)
     return output.getvalue()
 
-# --- EXTRACTION FUNCTIONS ---
 def process_database(uploaded_file):
     df_siswa_raw = pd.read_excel(uploaded_file, sheet_name="DATA BASE")
     df_siswa = df_siswa_raw.dropna(how="all").copy()
@@ -113,6 +112,8 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
 
     return df_hasil
 
+def process_kehadiran(uploaded_siswa_2, uploaded_kehadiran, sheet_siswa_2, target_sheets_2):
+
 # --- NAVIGATION TABS ---
 tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs(
     [
@@ -152,14 +153,14 @@ with tab_db:
 with tab_to_tka:
     st.header("Nilai TO Kini ada Ekstraknya 🟣")
 
-    col1, col2 = st.columns(2)
-    with col1:
+    col_to_tka_1, col_to_tka_2 = st.columns(2)
+    with col_to_tka_1:
         uploaded_siswa = st.file_uploader(
             "Upload File Excel Nama Siswa",
             type=["xlsx", "xls", "xlsm"],
             key="uploader_to_siswa",
         )
-    with col2:
+    with col_to_tka_2:
         uploaded_to = st.file_uploader(
             "Upload File Try Out",
             type=["xlsx", "xls", "xlsm"],
@@ -214,7 +215,71 @@ with tab_to_utbk:
 
 with tab_kehadiran:
     st.header("Ekstrak Kehadiran")
-    st.info("Coming Soon")
+    col_kehadiran_1, col_kehadiran_2 = st.columns(2)
+
+    with col_kehadiran_1:
+        uploaded_siswa_2 = st.file_uploader(
+            "Upload File Excel Nama Siswa",
+            type=["xlsx", "xls", "xlsm"],
+            key="uploader_kehadiran_siswa",
+        )
+    with col_kehadiran_2:
+        uploaded_kehadiran = st.file_uploader(
+            "Upload File Try Out",
+            type=["xlsx", "xls", "xlsm"],
+            key="uploader_kehadiran_data",
+        )
+
+    if uploaded_siswa_2 is None or uploaded_kehadiran is None:
+        st.info("Silakan upload kedua file Excel untuk melanjutkan.")
+    else:
+        # 1. FIXED: Removed quotes around uploaded variables
+        excel_siswa_2 = pd.ExcelFile(uploaded_siswa_2)
+        excel_kehadiran = pd.ExcelFile(uploaded_kehadiran)
+
+        # 2. FIXED: Changed excel_sheet -> excel_siswa_2
+        selected_sheet_siswa_2 = st.selectbox(
+            "Pilih Sheet Siswa:",
+            excel_siswa_2.sheet_names,
+            key="sheet_siswa_select_2",
+        )
+
+        selected_bulan = [
+            "SEPTEMBER",
+            "OKTOBER",
+            "NOVEMBER",
+            "DESEMBER",
+            "JANUARI",
+            "FEBRUARI",
+            "MARET",
+            "APRIL",
+            "MEI",
+            "JUNI",
+            "JULI",
+            "AGUSTUS",
+        ]
+
+        bulan_terpilih = st.selectbox(
+            "Pilih Bulan Kehadiran", selected_bulan, key="bulan_kehadiran"
+        )
+        bulan_angka = selected_bulan.index(bulan_terpilih) + 1
+
+        # 3. FIXED: Defined `cols` and initialized `selecting` dictionary
+        cols = st.columns(bulan_angka)
+        selecting = {}
+
+        # 4. FIXED: Added colons (:), fixed .sheet_names reference, and added unique key
+        for i in range(bulan_angka):
+            with cols[i]:
+                selecting[selected_bulan[i]] = st.selectbox(
+                    f"Bulan {selected_bulan[i]}",
+                    excel_kehadiran.sheet_names,  # Uses pd.ExcelFile sheet names
+                    key=f"select_sheet_kehadiran_{i}",  # Unique key for loop
+                )
+
+        # Dictionary containing all selected sheets mapped by month name
+        # e.g., {"SEPTEMBER": "Sheet1", "OKTOBER": "Sheet2"}
+        st.write("Selected Sheets:", selecting)
 
 with tab_binsik:
     st.header("Ekstrak Nilai Binsik")
