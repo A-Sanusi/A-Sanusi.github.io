@@ -275,10 +275,6 @@ with tab_kehadiran:
                     key=f"select_sheet_kehadiran_{i}",  # Unique key for loop
                 )
 
-        # Dictionary containing all selected sheets mapped by month name
-        # e.g., {"SEPTEMBER": "Sheet1", "OKTOBER": "Sheet2"}
-        st.write("Selected Sheets:", selecting)
-
 with tab_binsik:
     st.header("Ekstrak Nilai Binsik")
     st.info("Coming Soon")
