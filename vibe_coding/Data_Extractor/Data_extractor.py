@@ -261,7 +261,7 @@ with tab_kehadiran:
             with cols[i]:
                 selecting[selected_bulan[i]] = st.selectbox(
                     f"Bulan {selected_bulan[i]}",
-                    uploaded_siswa_2.sheet_names,  # Uses pd.ExcelFile sheet names
+                    excel_siswa_2.sheet_names,  # Uses pd.ExcelFile sheet names
                     key=f"select_sheet_kehadiran_{i}",  # Unique key for loop
                 )
 
