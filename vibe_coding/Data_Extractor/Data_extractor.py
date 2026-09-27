@@ -514,7 +514,7 @@ with tab_binsik:
 
     with col_binsik_2:
         uploaded_binsik = st.file_uploader(
-            "Upload File Binsik Siswa"
+            "Upload File Binsik Siswa",
             type=["xlsx", "xls", "xlsm"],
             key="uploader_binsik"
         )
