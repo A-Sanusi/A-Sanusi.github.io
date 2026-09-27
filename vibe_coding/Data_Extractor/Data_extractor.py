@@ -187,13 +187,14 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
             df_sub = df_sub.rename(columns=rename_map)
 
             # Direct left merge
-            df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
+            df_hasil = pd.merge(df_hasil, df_sub, on="key_match")
 
     # 3. Clean up final result
     df_hasil = df_hasil.drop(columns=["key_match"]).dropna(
         subset=[selected_siswa_cols[0]]
     )
-    df_hasil = df_hasil.fillna("0", how="left")
+    df_hasil = df_hasil.fillna("0")
+    df_hasil = pd.merge(df_hasil, how="left")
     df_hasil.index = range(1, len(df_hasil) + 1)
 
     return df_hasil
