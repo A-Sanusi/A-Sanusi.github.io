@@ -13,6 +13,7 @@ def convert_df_to_excel(df, sheet_name="Sheet1"):
         df.to_excel(writer, index=True, sheet_name=sheet_name)
     return output.getvalue()
 
+
 def process_database(uploaded_file):
     df_siswa_raw = pd.read_excel(uploaded_file, sheet_name="DATA BASE")
     df_siswa = df_siswa_raw.dropna(how="all").copy()
@@ -34,10 +35,13 @@ def process_database(uploaded_file):
     df_merged = df_merged.astype(object).fillna("-")
     return df_merged
 
+
 def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
     """Processes and merges Try Out scores with student data."""
     # 1. Load student list
-    df_siswa_raw = pd.read_excel(uploaded_siswa, sheet_name=sheet_siswa, header=0)
+    df_siswa_raw = pd.read_excel(
+        uploaded_siswa, sheet_name=sheet_siswa, header=0
+    )
     df_siswa = df_siswa_raw.dropna(how="all").copy()
     df_siswa.columns = df_siswa.columns.astype(str).str.strip()
     selected_siswa_cols = ["NAMA SISWA", "NAMA AKUN TO"]
@@ -46,7 +50,11 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
     col_siswa_akun = (
         "NAMA AKUN TO"
         if "NAMA AKUN TO" in df_siswa.columns
-        else ("NAMA AKUN" if "NAMA AKUN" in df_siswa.columns else df_siswa.columns[1])
+        else (
+            "NAMA AKUN"
+            if "NAMA AKUN" in df_siswa.columns
+            else df_siswa.columns[1]
+        )
     )
 
     df_siswa["key_match"] = (
@@ -68,9 +76,8 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
 
             df_nilai_raw.columns = df_nilai_raw.columns.astype(str).str.strip()
 
-            # Detect account/name column in TO sheet ("NAMA SISWA", "NAMA AKUN", etc.)
             col_to_akun = next(
-                (c for c in ["NAMA SISWA", "NAMA AKUN", "NAMA AKUN TO"] if c in df_nilai_raw.columns),
+                (c for c in ["NAMA SISWA"] if c in df_nilai_raw.columns),
                 df_nilai_raw.columns[1],
             )
 
@@ -82,7 +89,9 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
             )
 
             # Filter present score columns
-            available_score_cols = [c for c in selected_to_cols if c in df_nilai_raw.columns]
+            available_score_cols = [
+                c for c in selected_to_cols if c in df_nilai_raw.columns
+            ]
             df_sub = df_nilai_raw[
                 ["key_match"] + available_score_cols
             ].drop_duplicates(subset=["key_match"]).copy()
@@ -106,42 +115,129 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
             df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
 
     # 3. Clean final result DataFrame
-    df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=["NAMA SISWA"])
+    df_hasil = df_hasil.drop(columns=["key_match"]).dropna(
+        subset=["NAMA SISWA"]
+    )
     df_hasil = df_hasil.astype(object).fillna("-")
     df_hasil.index = range(1, len(df_hasil) + 1)
 
     return df_hasil
 
+
+def read_excel_smart_attendance(uploaded_file, sheet_name):
+    """Detects header placement, combines 2-row multi-headers (e.g., Row 1: KBM | BINSIK,
+
+    Row 2: HADIR | IZIN | ALPA or H | I | A), and forward-fills merged cells.
+    """
+    df_raw = pd.read_excel(uploaded_file, sheet_name=sheet_name, header=None)
+
+    # 1. Find the header row by searching for student name keywords
+    header_idx = None
+    for i, row in df_raw.iterrows():
+        row_str = " ".join([str(v).upper() for v in row.values if pd.notna(v)])
+        if "NAMA" in row_str or "SISWA" in row_str:
+            header_idx = i
+            break
+
+    if header_idx is None:
+        header_idx = 0
+
+    # 2. Check if the row below contains sub-headers
+    is_multi_header = False
+    if header_idx + 1 < len(df_raw):
+        next_row_vals = [
+            str(v).strip().upper()
+            for v in df_raw.iloc[header_idx + 1].values
+            if pd.notna(v)
+        ]
+        is_multi_header = any(
+            sub in next_row_vals
+            for sub in ["HADIR", "IZIN", "ALPA", "H", "I", "A", "SAKIT", "S"]
+        )
+
+    if is_multi_header:
+        # Row 1 (Category: KBM, BINSIK) — forward-fill merged columns
+        cat_row = (
+            df_raw.iloc[header_idx]
+            .ffill()
+            .fillna("")
+            .astype(str)
+            .str.strip()
+            .str.upper()
+        )
+
+        # Row 2 (Status: HADIR, IZIN, ALPA or H, I, A)
+        stat_row = (
+            df_raw.iloc[header_idx + 1]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+            .str.upper()
+        )
+
+        # Translate single letter codes if used in Excel
+        code_map = {"H": "HADIR", "I": "IZIN", "A": "ALPA", "S": "SAKIT"}
+
+        combined_headers = []
+        for cat, stat in zip(cat_row, stat_row):
+            cat_clean = (
+                "" if "UNNAMED" in cat or cat in ["NAN", "NONE"] else cat
+            )
+            stat_clean = (
+                "" if "UNNAMED" in stat or stat in ["NAN", "NONE"] else stat
+            )
+            stat_clean = code_map.get(stat_clean, stat_clean)
+
+            if cat_clean and stat_clean and stat_clean not in cat_clean:
+                combined_headers.append(f"{cat_clean} {stat_clean}")
+            elif cat_clean:
+                combined_headers.append(cat_clean)
+            elif stat_clean:
+                combined_headers.append(stat_clean)
+            else:
+                combined_headers.append("UNKNOWN")
+
+        df_data = df_raw.iloc[header_idx + 2 :].copy()
+        df_data.columns = combined_headers
+    else:
+        # Single header row setup
+        df_data = pd.read_excel(
+            uploaded_file, sheet_name=sheet_name, header=header_idx
+        )
+        df_data.columns = [
+            str(c).replace("\xa0", " ").strip().upper()
+            for c in df_data.columns
+        ]
+
+    return df_data.dropna(how="all")
+
+
 def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
+    """Processes attendance with 2-row header support, name normalization, and numeric conversion."""
     # 1. Load base student list
-    df_siswa_raw = pd.read_excel(
-        uploaded_file, sheet_name=sheet_siswa, header=0
-    )
-    df_siswa = df_siswa_raw.dropna(how="all").copy()
-    df_siswa.columns = df_siswa.columns.astype(str).str.strip()
+    df_siswa = read_excel_smart_attendance(uploaded_file, sheet_siswa)
 
-    selected_siswa_cols = [
-        c for c in ["NAMA SISWA"] if c in df_siswa.columns
-    ]
-    if not selected_siswa_cols:
-        selected_siswa_cols = [df_siswa.columns[0]]
-
-    # Detect student account column
+    possible_name_cols = ["NAMA SISWA", "NAMA AKUN TO", "NAMA AKUN", "NAMA"]
     col_siswa_akun = next(
-        (
-            c
-            for c in ["NAMA SISWA"]
-            if c in df_siswa.columns
-        ),
+        (c for c in possible_name_cols if c in df_siswa.columns),
         df_siswa.columns[0],
     )
 
+    selected_siswa_cols = [
+        c for c in ["NAMA SISWA", "NAMA AKUN TO"] if c in df_siswa.columns
+    ]
+    if not selected_siswa_cols:
+        selected_siswa_cols = [col_siswa_akun]
+
     df_siswa["key_match"] = (
-        df_siswa[col_siswa_akun].astype(str).str.strip().str.lower()
+        df_siswa[col_siswa_akun]
+        .astype(str)
+        .str.replace(r"\s+", " ", regex=True)
+        .str.strip()
+        .str.lower()
     )
     df_hasil = df_siswa[selected_siswa_cols + ["key_match"]].copy()
 
-    # Define target attendance headers to pull
     target_cols = [
         "KBM HADIR",
         "KBM IZIN",
@@ -156,61 +252,73 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
     # 2. Extract existing columns sheet by sheet
     for sheet in target_sheets:
         if sheet in excel_file.sheet_names:
-            df_sheet_raw = pd.read_excel(
-                uploaded_file, sheet_name=sheet, header=0
-            ).dropna(how="all")
-            df_sheet_raw.columns = df_sheet_raw.columns.astype(str).str.strip()
+            df_sheet = read_excel_smart_attendance(uploaded_file, sheet)
 
             col_sheet_akun = next(
-                (
-                    c
-                    for c in ["NAMA SISWA"]
-                    if c in df_sheet_raw.columns
-                ),
-                df_sheet_raw.columns[0],
+                (c for c in possible_name_cols if c in df_sheet.columns),
+                df_sheet.columns[0],
             )
 
-            df_sheet_raw["key_match"] = (
-                df_sheet_raw[col_sheet_akun]
+            df_sheet["key_match"] = (
+                df_sheet[col_sheet_akun]
                 .astype(str)
+                .str.replace(r"\s+", " ", regex=True)
                 .str.strip()
                 .str.lower()
             )
 
-            # Filter present attendance columns
-            avail_cols = [c for c in target_cols if c in df_sheet_raw.columns]
-            df_sub = df_sheet_raw[["key_match"] + avail_cols].drop_duplicates(
-                subset=["key_match"]
-            )
+            # Match target columns flexibly
+            matched_cols_map = {}
+            for target in target_cols:
+                for col in df_sheet.columns:
+                    if col.strip().upper() == target.upper():
+                        matched_cols_map[col] = f"{target} ({sheet})"
+                        break
 
-            rename_map = {c: f"{c} ({sheet})" for c in avail_cols}
-            df_sub = df_sub.rename(columns=rename_map)
+            if matched_cols_map:
+                sub_cols = ["key_match"] + list(matched_cols_map.keys())
+                df_sub = df_sheet[sub_cols].drop_duplicates(
+                    subset=["key_match"]
+                ).copy()
 
-            # Direct left merge
-            df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
+                # Safely convert extracted attendance values to integer numbers
+                for orig_col in matched_cols_map.keys():
+                    df_sub[orig_col] = (
+                        pd.to_numeric(df_sub[orig_col], errors="coerce")
+                        .fillna(0)
+                        .astype(int)
+                    )
+
+                df_sub = df_sub.rename(columns=matched_cols_map)
+                df_hasil = pd.merge(
+                    df_hasil, df_sub, on="key_match", how="left"
+                )
 
     # 3. Clean up final result
     df_hasil = df_hasil.drop(columns=["key_match"]).dropna(
         subset=[selected_siswa_cols[0]]
     )
-    df_hasil = df_hasil.fillna("-")
+    df_hasil = df_hasil.fillna(0)
     df_hasil.index = range(1, len(df_hasil) + 1)
 
     return df_hasil
 
+
 # --- NAVIGATION TABS ---
-tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs(
-    [
-        "🔴 Ekstrak Database",
-        "🟣 Ekstrak Nilai TO TKA",
-        "🔴 Ekstrak Nilai TO SKD (coming soon)",
-        "🟣 Ekstrak Nilai TO UTBK (coming soon)",
-        "🔴 Ekstrak Kehadiran (coming soon)",
-        "🟣 Ekstrak Nilai Binsik (coming soon)",
-    ]
+tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = (
+    st.tabs(
+        [
+            "🔴 Ekstrak Database",
+            "🟣 Ekstrak Nilai TO TKA",
+            "🔴 Ekstrak Nilai TO SKD (coming soon)",
+            "🟣 Ekstrak Nilai TO UTBK (coming soon)",
+            "🔴 Ekstrak Kehadiran",
+            "🟣 Ekstrak Nilai Binsik (coming soon)",
+        ]
+    )
 )
 
-#Tab_database
+# Tab_database
 with tab_db:
     st.header("Ekstrak Database")
     uploaded_db = st.file_uploader(
@@ -233,7 +341,7 @@ with tab_db:
             key="download_db",
         )
 
-#Tab_TKA
+# Tab_TKA
 with tab_to_tka:
     st.header("Nilai TO Kini ada Ekstraknya 🟣")
 
@@ -338,7 +446,9 @@ with tab_kehadiran:
 
         # Select sheets for each month
         st.subheader("Pilih Sheet Kehadiran Tiap Bulan")
-        cols = st.columns(min(bulan_angka, 4))  # Grid layout max 4 cols per row
+        cols = st.columns(
+            min(bulan_angka, 4)
+        )  # Grid layout max 4 cols per row
         selecting = {}
 
         for i in range(bulan_angka):
