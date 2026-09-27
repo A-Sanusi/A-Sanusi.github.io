@@ -113,10 +113,6 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
     return df_hasil
 
 def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
-    """Extracts existing attendance columns from each monthly sheet
-
-    without summing them, appending the sheet name to column headers.
-    """
     # 1. Load base student list
     df_siswa_raw = pd.read_excel(
         uploaded_file, sheet_name=sheet_siswa, header=0
@@ -125,7 +121,7 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
     df_siswa.columns = df_siswa.columns.astype(str).str.strip()
 
     selected_siswa_cols = [
-        c for c in ["NAMA SISWA", "NAMA AKUN TO"] if c in df_siswa.columns
+        c for c in ["NAMA SISWA"] if c in df_siswa.columns
     ]
     if not selected_siswa_cols:
         selected_siswa_cols = [df_siswa.columns[0]]
@@ -134,7 +130,7 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
     col_siswa_akun = next(
         (
             c
-            for c in ["NAMA AKUN TO", "NAMA AKUN", "NAMA SISWA"]
+            for c in ["NAMA SISWA"]
             if c in df_siswa.columns
         ),
         df_siswa.columns[0],
@@ -160,7 +156,6 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
     # 2. Extract existing columns sheet by sheet
     for sheet in target_sheets:
         if sheet in excel_file.sheet_names:
-            # Change header=0 to header=7 if headers start on line 8 in your Excel sheet
             df_sheet_raw = pd.read_excel(
                 uploaded_file, sheet_name=sheet, header=0
             ).dropna(how="all")
@@ -169,7 +164,7 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
             col_sheet_akun = next(
                 (
                     c
-                    for c in ["NAMA AKUN TO", "NAMA AKUN", "NAMA SISWA"]
+                    for c in ["NAMA SISWA"]
                     if c in df_sheet_raw.columns
                 ),
                 df_sheet_raw.columns[0],
@@ -188,7 +183,6 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
                 subset=["key_match"]
             )
 
-            # Rename columns to include month name (e.g., KBM HADIR (SEPTEMBER))
             rename_map = {c: f"{c} ({sheet})" for c in avail_cols}
             df_sub = df_sub.rename(columns=rename_map)
 
