@@ -507,7 +507,7 @@ with tab_binsik:
     col_binsik_1, col_binsik_2 = st.columns(2)
     with col_binsik_1:
         uploaded_siswa_3 = st.file_uploader(
-            "Upload Excel Nama Siswa"
+            "Upload Excel Nama Siswa",
             type=["xlsx", "xls", "xlsm"],
             key="uploader_kehadiran_siswa_3",
         )
