@@ -544,13 +544,11 @@ with tab_binsik:
     st.dataframe(df_hasil_binsik, use_container_width=True)
 
     excel_bytes_to = convert_df_to_excel(
-        df_hasil, sheet_name="Hasil Nilai Binsik"
+        df_hasil_binsik, sheet_name="Hasil Nilai Binsik"
     )
     st.download_button(
         label="Download Hasil Nilai",
         data=excel_bytes_to,
         file_name="Hasil_Nilai_Binsik.xlsx",
         key="download_binsik",
-    )
-
-    
+    )    
