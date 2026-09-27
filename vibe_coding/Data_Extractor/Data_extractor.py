@@ -119,13 +119,13 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
     df_siswa = df_siswa_raw.dropna(how="all").copy()
     df_siswa.columns = df_siswa.columns.astype(str).str.strip()
 
-    selected_siswa_cols = [c for c in ["NAMA SISWA", "NAMA AKUN TO"] if c in df_siswa.columns]
+    selected_siswa_cols = [c for c in ["NAMA SISWA"] if c in df_siswa.columns]
     if not selected_siswa_cols:
         selected_siswa_cols = [df_siswa.columns[0]]
 
     # Detect student account column dynamically
     col_siswa_akun = next(
-        (c for c in ["NAMA AKUN TO", "NAMA AKUN", "NAMA SISWA"] if c in df_siswa.columns),
+        (c for c in ["NAMA SISWA"] if c in df_siswa.columns),
         df_siswa.columns[0],
     )
 
@@ -159,7 +159,7 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
 
             # Detect matching name/account column in monthly sheet
             col_sheet_akun = next(
-                (c for c in ["NAMA AKUN TO", "NAMA AKUN", "NAMA SISWA"] if c in df_sheet_raw.columns),
+                (c for c in ["NAMA SISWA"] if c in df_sheet_raw.columns),
                 df_sheet_raw.columns[0],
             )
 
