@@ -239,7 +239,7 @@ tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs
         "🟣 Ekstrak Nilai TO TKA",
         "🔴 Ekstrak Nilai TO SKD (coming soon)",
         "🟣 Ekstrak Nilai TO UTBK (coming soon)",
-        "🔴 Ekstrak Kehadiran (coming soon)",
+        "🔴 Ekstrak Kehadiran",
         "🟣 Ekstrak Nilai Binsik (coming soon)",
     ]
 )
