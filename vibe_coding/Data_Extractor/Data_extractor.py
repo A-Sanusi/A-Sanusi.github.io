@@ -95,9 +95,9 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
 
             # Rename columns per subtest sheet
             rename_map = {
-                "TOTAL BENAR": f"Jumlah_Nilai_Benar_{sheet}",
-                "NILAI": f"Nilai_{sheet}",
-                "KATEGORI": f"Kategori_{sheet}",
+                "TOTAL BENAR": f"Jumlah_Nilai_Benar {sheet}",
+                "NILAI": f"Nilai {sheet}",
+                "KATEGORI": f"Kategori {sheet}",
             }
             df_sub = df_sub.rename(columns=rename_map)
 
@@ -292,20 +292,20 @@ def process_binsik(uploaded_siswa_3, uploaded_binsik, sheet_siswa, selected_shee
     ].drop_duplicates(subset=["key_match"]).copy()
 
     rename_map = {
-        "JUMLAH LARI": f"Jumlah Lari_{selected_sheet_binsik}",
-        "JUMLAH SHUTTLE RUN": f"Shuttle Run_{selected_sheet_binsik}",
-        "JUMLAH PUSH UP": f"Push Up_{selected_sheet_binsik}",
-        "JUMLAH SIT UP": f"Jumlah Sit Up_{selected_sheet_binsik}",
-        "JUMLAH PULL UP": f"Jumlah Pull Up_{selected_sheet_binsik}",
-        "JUMLAH CHINNING UP": f"Jumlah Chinning Up_{selected_sheet_binsik}",
-        "NILAI LARI": f"Nilai Lari_{selected_sheet_binsik}",
-        "NILAI SHUTTLE RUN": f"Nilai Shuttle Run_{selected_sheet_binsik}",
-        "NILAI PUSH UP": f"Nilai Push Up_{selected_sheet_binsik}",
-        "NILAI SIT UP": f"Nilai Sit Up_{selected_sheet_binsik}",
-        "NILAI PULL UP": f"Nilai Pull Up_{selected_sheet_binsik}",
-        "NILAI CHINNING UP": f"Nilai Chinning Up_{selected_sheet_binsik}",
-        "T-SCORE": f"Total Skor_{selected_sheet_binsik}",
-        "KELULUSAN": f"Kelulusan_{selected_sheet_binsik}",
+        "JUMLAH LARI": f"Jumlah Lari {selected_sheet_binsik}",
+        "JUMLAH SHUTTLE RUN": f"Shuttle Run {selected_sheet_binsik}",
+        "JUMLAH PUSH UP": f"Push Up {selected_sheet_binsik}",
+        "JUMLAH SIT UP": f"Jumlah Sit Up {selected_sheet_binsik}",
+        "JUMLAH PULL UP": f"Jumlah Pull Up {selected_sheet_binsik}",
+        "JUMLAH CHINNING UP": f"Jumlah Chinning Up {selected_sheet_binsik}",
+        "NILAI LARI": f"Nilai Lari {selected_sheet_binsik}",
+        "NILAI SHUTTLE RUN": f"Nilai Shuttle Run {selected_sheet_binsik}",
+        "NILAI PUSH UP": f"Nilai Push Up {selected_sheet_binsik}",
+        "NILAI SIT UP": f"Nilai Sit Up {selected_sheet_binsik}",
+        "NILAI PULL UP": f"Nilai Pull Up {selected_sheet_binsik}",
+        "NILAI CHINNING UP": f"Nilai Chinning Up {selected_sheet_binsik}",
+        "T-SCORE": f"Total Skor {selected_sheet_binsik}",
+        "KELULUSAN": f"Kelulusan {selected_sheet_binsik}",
     }
     df_sub = df_sub.rename(columns=rename_map)
 
@@ -464,7 +464,7 @@ with tab_kehadiran:
                 selecting[selected_bulan[i]] = st.selectbox(
                     f"Bulan {selected_bulan[i]}",
                     excel_siswa_2.sheet_names,
-                    key=f"select_sheet_kehadiran_{i}",
+                    key=f"select_sheet_kehadiran{i}",
                 )
 
         target_sheets = list(selecting.values())
