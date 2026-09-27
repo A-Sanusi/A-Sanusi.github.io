@@ -239,8 +239,8 @@ def process_binsik(uploaded_siswa_3, uploaded_binsik, sheet_siswa, selected_shee
     selected_siswa_cols = ["NAMA SISWA"]
 
     col_siswa_akun = (
-        "NAMA AKUN TO"
-        if "NAMA AKUN TO" in df_siswa.columns
+        "NAMA AKUN BINSIK"
+        if "NAMA AKUN BINSIK" in df_siswa.columns
         else ("NAMA AKUN" if "NAMA AKUN" in df_siswa.columns else df_siswa.columns[1])
     )
 
@@ -274,7 +274,7 @@ def process_binsik(uploaded_siswa_3, uploaded_binsik, sheet_siswa, selected_shee
     df_nilai_raw.columns = df_nilai_raw.columns.astype(str).str.strip()
 
     col_to_akun = next(
-        (c for c in ["NAMA SISWA", "NAMA AKUN", "NAMA AKUN TO"] if c in df_nilai_raw.columns),
+        (c for c in ["NAMA SISWA"] if c in df_nilai_raw.columns),
         df_nilai_raw.columns[1],
     )
 
