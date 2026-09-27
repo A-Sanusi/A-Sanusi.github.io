@@ -198,42 +198,41 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
     return df_hasil
 
 def calculate_total_kehadiran(df_monthly):
-  """Calculates total attendance per student into a separate DataFrame."""
-  col_siswa = (
-      "NAMA SISWA"
-      if "NAMA SISWA" in df_monthly.columns
-      else df_monthly.columns[0]
-  )
-  df_total = pd.DataFrame({col_siswa: df_monthly[col_siswa]})
+    """Calculates total attendance per student into a separate DataFrame."""
+    col_siswa = (
+        "NAMA SISWA"
+        if "NAMA SISWA" in df_monthly.columns
+        else df_monthly.columns[0]
+    )
+    df_total = pd.DataFrame({col_siswa: df_monthly[col_siswa]})
 
-  target_metrics = [
-      "KBM HADIR",
-      "KBM IZIN",
-      "KBM ALPA",
-      "BINSIK HADIR",
-      "BINSIK IZIN",
-      "BINSIK ALPA",
-  ]
-
-  for metric in target_metrics:
-    matching_cols = [
-        col for col in df_monthly.columns if col.startswith(f"{metric} (")
+    target_metrics = [
+        "KBM HADIR",
+        "KBM IZIN",
+        "KBM ALPA",
+        "BINSIK HADIR",
+        "BINSIK IZIN",
+        "BINSIK ALPA",
     ]
-    if matching_cols:
-      df_total[f"TOTAL {metric}"] = (
-          df_monthly[matching_cols]
-          .apply(pd.to_numeric, errors="coerce")
-          .fillna(0)
-          .sum(axis=1)
-          .astype(int)
-          .astype(str)
-      )
 
-  df_total.index = df_monthly.index
-  return df_total
+    for metric in target_metrics:
+        matching_cols = [
+            col for col in df_monthly.columns if col.startswith(f"{metric} (")
+        ]
+        if matching_cols:
+            df_total[f"TOTAL {metric}"] = (
+                df_monthly[matching_cols]
+                .apply(pd.to_numeric, errors="coerce")
+                .fillna(0)
+                .sum(axis=1)
+                .astype(int)
+                .astype(str)
+            )
+
+    df_total.index = df_monthly.index
+    return df_total
 
 def process_binsik(uploaded_siswa_3, uploaded_binsik, sheet_siswa, selected_sheet_binsik):
-    # 1. Baca data siswa utama
     df_siswa_raw = pd.read_excel(uploaded_siswa_3, sheet_name=sheet_siswa)
     df_siswa = df_siswa_raw.dropna(how="all").copy()
     df_siswa.columns = df_siswa.columns.astype(str).str.strip()
@@ -251,7 +250,6 @@ def process_binsik(uploaded_siswa_3, uploaded_binsik, sheet_siswa, selected_shee
 
     df_hasil = df_siswa[selected_siswa_cols + ["key_match"]].copy()
 
-    # 2. Daftar kolom Binsik yang akan diekstrak
     selected_binsik_cols = [
         "JUMLAH LARI",
         "JUMLAH SHUTTLE RUN",
@@ -287,7 +285,7 @@ def process_binsik(uploaded_siswa_3, uploaded_binsik, sheet_siswa, selected_shee
         .str.lower()
     )
 
-    # Filter kolom yang benar-benar ada di file
+    # Filter present score columns
     available_score_cols = [c for c in selected_binsik_cols if c in df_nilai_raw.columns]
     df_sub = df_nilai_raw[
         ["key_match"] + available_score_cols
@@ -311,10 +309,10 @@ def process_binsik(uploaded_siswa_3, uploaded_binsik, sheet_siswa, selected_shee
     }
     df_sub = df_sub.rename(columns=rename_map)
 
-    # Merge dengan data siswa
+    # Merge per subtest sheet
     df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
-
-    # 3. Pembersihan akhir (hapus key_match, isi NaN dengan "-", re-index mulai dari 1)
+    
+    # Pembersihan akhir
     df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=["NAMA SISWA"])
     df_hasil = df_hasil.astype(object).fillna("-")
     df_hasil.index = range(1, len(df_hasil) + 1)
@@ -328,7 +326,7 @@ tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs
         "🔴 Ekstrak Nilai TO SKD (coming soon)",
         "🟣 Ekstrak Nilai TO UTBK (coming soon)",
         "🔴 Ekstrak Kehadiran",
-        "🟣 Ekstrak Nilai Binsik (coming soon)",
+        "🟣 Ekstrak Nilai Binsik",
     ]
 )
 
@@ -418,96 +416,96 @@ with tab_to_utbk:
     st.info("Coming Soon")
 
 with tab_kehadiran:
-  st.header("Ekstrak Kehadiran")
-  uploaded_siswa_2 = st.file_uploader(
-      "Upload File Excel Nama Siswa",
-      type=["xlsx", "xls", "xlsm"],
-      key="uploader_kehadiran_siswa",
-  )
-
-  if uploaded_siswa_2 is None:
-    st.info("Silakan upload file Excel untuk melanjutkan.")
-  else:
-    excel_siswa_2 = pd.ExcelFile(uploaded_siswa_2)
-
-    selected_sheet_siswa_2 = st.selectbox(
-        "Pilih Sheet Data Siswa Utama:",
-        excel_siswa_2.sheet_names,
-        key="sheet_siswa_select_2",
+    st.header("Ekstrak Kehadiran")
+    uploaded_siswa_2 = st.file_uploader(
+        "Upload File Excel Nama Siswa",
+        type=["xlsx", "xls", "xlsm"],
+        key="uploader_kehadiran_siswa",
     )
 
-    selected_bulan = [
-        "SEPTEMBER",
-        "OKTOBER",
-        "NOVEMBER",
-        "DESEMBER",
-        "JANUARI",
-        "FEBRUARI",
-        "MARET",
-        "APRIL",
-        "MEI",
-        "JUNI",
-        "JULI",
-        "AGUSTUS",
-    ]
+    if uploaded_siswa_2 is None:
+        st.info("Silakan upload file Excel untuk melanjutkan.")
+    else:
+        excel_siswa_2 = pd.ExcelFile(uploaded_siswa_2)
 
-    bulan_terpilih = st.selectbox(
-        "Pilih Bulan Rapor", selected_bulan, key="bulan_kehadiran"
-    )
-    bulan_angka = selected_bulan.index(bulan_terpilih) + 1
-
-    st.subheader("Pilih Sheet Kehadiran Tiap Bulan")
-    cols = st.columns(min(bulan_angka, 4))
-    selecting = {}
-
-    for i in range(bulan_angka):
-      col_idx = i % 4
-      with cols[col_idx]:
-        selecting[selected_bulan[i]] = st.selectbox(
-            f"Bulan {selected_bulan[i]}",
+        selected_sheet_siswa_2 = st.selectbox(
+            "Pilih Sheet Data Siswa Utama:",
             excel_siswa_2.sheet_names,
-            key=f"select_sheet_kehadiran_{i}",
+            key="sheet_siswa_select_2",
         )
 
-    target_sheets = list(selecting.values())
+        selected_bulan = [
+            "SEPTEMBER",
+            "OKTOBER",
+            "NOVEMBER",
+            "DESEMBER",
+            "JANUARI",
+            "FEBRUARI",
+            "MARET",
+            "APRIL",
+            "MEI",
+            "JUNI",
+            "JULI",
+            "AGUSTUS",
+        ]
 
-    # Generate Monthly DataFrame
-    df_hasil_kehadiran = process_kehadiran(
-        uploaded_siswa_2, selected_sheet_siswa_2, target_sheets
-    )
+        bulan_terpilih = st.selectbox(
+            "Pilih Bulan Rapor", selected_bulan, key="bulan_kehadiran"
+        )
+        bulan_angka = selected_bulan.index(bulan_terpilih) + 1
 
-    # Generate Total DataFrame separately
-    df_total_kehadiran = calculate_total_kehadiran(df_hasil_kehadiran)
+        st.subheader("Pilih Sheet Kehadiran Tiap Bulan")
+        cols = st.columns(min(bulan_angka, 4))
+        selecting = {}
 
-    # --- TABLE 1: Monthly Breakdown ---
-    st.subheader("Rekap Kehadiran Siswa Per Bulan")
-    st.dataframe(df_hasil_kehadiran, use_container_width=True)
+        for i in range(bulan_angka):
+            col_idx = i % 4
+            with cols[col_idx]:
+                selecting[selected_bulan[i]] = st.selectbox(
+                    f"Bulan {selected_bulan[i]}",
+                    excel_siswa_2.sheet_names,
+                    key=f"select_sheet_kehadiran_{i}",
+                )
 
-    excel_bytes_kehadiran = convert_df_to_excel(
-        df_hasil_kehadiran, sheet_name="Kehadiran Per Bulan"
-    )
-    st.download_button(
-        label="Download Rekap Per Bulan",
-        data=excel_bytes_kehadiran,
-        file_name="Rekap_Kehadiran_Per_Bulan.xlsx",
-        key="download_kehadiran_bulan",
-    )
+        target_sheets = list(selecting.values())
 
-    st.divider()  # Visual divider line between tables
+        # Generate Monthly DataFrame
+        df_hasil_kehadiran = process_kehadiran(
+            uploaded_siswa_2, selected_sheet_siswa_2, target_sheets
+        )
 
-    # --- TABLE 2: Total Summary ---
-    st.subheader("Rekap TOTAL Kehadiran Siswa")
-    st.dataframe(df_total_kehadiran, use_container_width=True)
+        # Generate Total DataFrame separately
+        df_total_kehadiran = calculate_total_kehadiran(df_hasil_kehadiran)
 
-    excel_bytes_total = convert_df_to_excel(
-        df_total_kehadiran, sheet_name="Total Kehadiran"
-    )
-    st.download_button(
-        label="Download Rekap TOTAL",
-        data=excel_bytes_total,
-        file_name="Rekap_TOTAL_Kehadiran.xlsx",
-        key="download_kehadiran_total",
-    )
+        # --- TABLE 1: Monthly Breakdown ---
+        st.subheader("Rekap Kehadiran Siswa Per Bulan")
+        st.dataframe(df_hasil_kehadiran, use_container_width=True)
+
+        excel_bytes_kehadiran = convert_df_to_excel(
+            df_hasil_kehadiran, sheet_name="Kehadiran Per Bulan"
+        )
+        st.download_button(
+            label="Download Rekap Per Bulan",
+            data=excel_bytes_kehadiran,
+            file_name="Rekap_Kehadiran_Per_Bulan.xlsx",
+            key="download_kehadiran_bulan",
+        )
+
+        st.divider()
+
+        # --- TABLE 2: Total Summary ---
+        st.subheader("Rekap TOTAL Kehadiran Siswa")
+        st.dataframe(df_total_kehadiran, use_container_width=True)
+
+        excel_bytes_total = convert_df_to_excel(
+            df_total_kehadiran, sheet_name="Total Kehadiran"
+        )
+        st.download_button(
+            label="Download Rekap TOTAL",
+            data=excel_bytes_total,
+            file_name="Rekap_TOTAL_Kehadiran.xlsx",
+            key="download_kehadiran_total",
+        )
 
 with tab_binsik:
     st.header("Ekstrak Nilai Binsik")
@@ -528,7 +526,7 @@ with tab_binsik:
         )
 
     if uploaded_siswa_3 is None or uploaded_binsik is None:
-        st.info("Silakan upload kedua file Excel untuk melanjutkan")
+        st.info("Silakan upload kedua file Excel untuk melanjutkan.")
     else:
         excel_siswa_3 = pd.ExcelFile(uploaded_siswa_3)
         
@@ -546,17 +544,19 @@ with tab_binsik:
             key="sheet_binsik"
         )
 
-    df_hasil_binsik = process_binsik(uploaded_siswa_3, uploaded_binsik, selected_sheet_siswa_3, selected_sheet_binsik)
+        df_hasil_binsik = process_binsik(
+            uploaded_siswa_3, uploaded_binsik, selected_sheet_siswa_3, selected_sheet_binsik
+        )
 
-    st.subheader("Tabel Nilai Binsik Siswa")
-    st.dataframe(df_hasil_binsik, use_container_width=True)
+        st.subheader("Tabel Nilai Binsik Siswa")
+        st.dataframe(df_hasil_binsik, use_container_width=True)
 
-    excel_bytes_to = convert_df_to_excel(
-        df_hasil_binsik, sheet_name="Hasil Nilai Binsik"
-    )
-    st.download_button(
-        label="Download Hasil Nilai",
-        data=excel_bytes_to,
-        file_name="Hasil_Nilai_Binsik.xlsx",
-        key="download_binsik",
-    )    
+        excel_bytes_to = convert_df_to_excel(
+            df_hasil_binsik, sheet_name="Hasil Nilai Binsik"
+        )
+        st.download_button(
+            label="Download Hasil Nilai",
+            data=excel_bytes_to,
+            file_name="Hasil_Nilai_Binsik.xlsx",
+            key="download_binsik",
+        )
