@@ -6,7 +6,6 @@ st.set_page_config(page_title="Ekstrak Data", layout="wide")
 st.link_button("Menu", "https://a-sanusi.github.io/vibe_coding/vibe_coding.html")
 st.title("Ekstrak Data")
 
-
 def convert_df_to_excel(df, sheet_name="Sheet1"):
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
