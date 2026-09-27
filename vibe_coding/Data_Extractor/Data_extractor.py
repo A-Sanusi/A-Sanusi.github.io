@@ -530,7 +530,7 @@ with tab_binsik:
             key="sheet_siswa_select_3"
         )
 
-        excel_binsik = pfd.ExcelFile(uploaded_binsik)
+        excel_binsik = pd.ExcelFile(uploaded_binsik)
 
         selected_sheet_binsik = st.selectbox(
             "Pilih Data Binsik:",
