@@ -334,7 +334,7 @@ with tab_to_utbk:
 with tab_kehadiran:
   st.header("Ekstrak Kehadiran")
   uploaded_siswa_2 = st.file_uploader(
-      "Upload File Excel Nama Siswa / Kehadiran",
+      "Upload File Excel Nama Siswa",
       type=["xlsx", "xls", "xlsm"],
       key="uploader_kehadiran_siswa",
   )
