@@ -287,7 +287,7 @@ def process_binsik(uploaded_siswa_3, uploaded_binsik, selected_sheet_binsik):
     )
 
     # Filter present score columns
-    available_score_cols = [c for c in selected_to_cols if c in df_nilai_raw.columns]
+    available_score_cols = [c for c in selected_binsik_cols if c in df_nilai_raw.columns]
     df_sub = df_nilai_raw[
         ["key_match"] + available_score_cols
     ].drop_duplicates(subset=["key_match"]).copy()
