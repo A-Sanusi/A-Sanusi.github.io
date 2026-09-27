@@ -107,7 +107,7 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
 
     # 3. Clean final result DataFrame
     df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=["NAMA SISWA"])
-    df_hasil = df_hasil.astype(object).fillna("-")
+    df_hasil = df_hasil.astype(object).fillna("0")
     df_hasil.index = range(1, len(df_hasil) + 1)
 
     return df_hasil
@@ -357,7 +357,7 @@ with tab_kehadiran:
             uploaded_siswa_2, selected_sheet_siswa_2, target_sheets
         )
 
-        st.subheader("Rekap Kehadiran Siswa")
+        st.subheader("Rekap Kehadiran Siswa Per Bulan")
         st.dataframe(df_hasil_kehadiran, use_container_width=True)
 
         excel_bytes_kehadiran = convert_df_to_excel(
@@ -369,6 +369,8 @@ with tab_kehadiran:
             file_name="Rekap_Kehadiran_Siswa.xlsx",
             key="download_kehadiran",
         )
+
+        st.subheader("Rekap TOTAL Kehadiran Siswa")
 
 with tab_binsik:
     st.header("Ekstrak Nilai Binsik")
