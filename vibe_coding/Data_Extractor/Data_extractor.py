@@ -317,7 +317,7 @@ def process_binsik(
   score_cols = [
       col
       for col in df_sub.columns
-      if col.startswith("Nilai ") or col.startswith("Total Skor ")
+      if col.startswith("Jumlah") or col.startswith("Nilai") or col.startswith("Total Skor")
   ]
   for col in score_cols:
     df_sub[col] = pd.to_numeric(df_sub[col], errors="coerce").round(2)
