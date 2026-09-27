@@ -107,7 +107,7 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
 
     # 3. Clean final result DataFrame
     df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=["NAMA SISWA"])
-    df_hasil = df_hasil.astype(object).fillna("0")
+    df_hasil = df_hasil.astype(object).fillna("-")
     df_hasil.index = range(1, len(df_hasil) + 1)
 
     return df_hasil
@@ -193,7 +193,7 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
     df_hasil = df_hasil.drop(columns=["key_match"]).dropna(
         subset=[selected_siswa_cols[0]]
     )
-    df_hasil = df_hasil.fillna("-")
+    df_hasil = df_hasil.fillna("0")
     df_hasil.index = range(1, len(df_hasil) + 1)
 
     return df_hasil
