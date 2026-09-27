@@ -112,6 +112,83 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
 
     return df_hasil
 
+def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
+    """Processes attendance data from target sheets and sums attendance per student."""
+    # 1. Load base student list
+    df_siswa_raw = pd.read_excel(uploaded_file, sheet_name=sheet_siswa, header=0)
+    df_siswa = df_siswa_raw.dropna(how="all").copy()
+    df_siswa.columns = df_siswa.columns.astype(str).str.strip()
+
+    selected_siswa_cols = [c for c in ["NAMA SISWA", "NAMA AKUN TO"] if c in df_siswa.columns]
+    if not selected_siswa_cols:
+        selected_siswa_cols = [df_siswa.columns[0]]
+
+    # Detect student account column dynamically
+    col_siswa_akun = next(
+        (c for c in ["NAMA AKUN TO", "NAMA AKUN", "NAMA SISWA"] if c in df_siswa.columns),
+        df_siswa.columns[0],
+    )
+
+    df_siswa["key_match"] = (
+        df_siswa[col_siswa_akun].astype(str).str.strip().str.lower()
+    )
+
+    df_hasil = df_siswa[selected_siswa_cols + ["key_match"]].copy()
+
+    # Target attendance columns to extract
+    target_cols = [
+        "KBM HADIR",
+        "KBM IZIN",
+        "KBM ALPA",
+        "BINSIK HADIR",
+        "BINSIK IZIN",
+        "BINSIK ALPA",
+    ]
+
+    # Initialize total counts with 0
+    for col in target_cols:
+        df_hasil[col] = 0
+
+    excel_file = pd.ExcelFile(uploaded_file)
+
+    # 2. Iterate through each selected monthly sheet & sum attendance counts
+    for sheet in target_sheets:
+        if sheet in excel_file.sheet_names:
+            df_sheet_raw = pd.read_excel(uploaded_file, sheet_name=sheet).dropna(how="all")
+            df_sheet_raw.columns = df_sheet_raw.columns.astype(str).str.strip()
+
+            # Detect matching name/account column in monthly sheet
+            col_sheet_akun = next(
+                (c for c in ["NAMA AKUN TO", "NAMA AKUN", "NAMA SISWA"] if c in df_sheet_raw.columns),
+                df_sheet_raw.columns[0],
+            )
+
+            df_sheet_raw["key_match"] = (
+                df_sheet_raw[col_sheet_akun].astype(str).str.strip().str.lower()
+            )
+
+            # Keep available target columns
+            avail_cols = [c for c in target_cols if c in df_sheet_raw.columns]
+            df_sub = df_sheet_raw[["key_match"] + avail_cols].drop_duplicates(subset=["key_match"]).copy()
+
+            # Convert to numeric values
+            for c in avail_cols:
+                df_sub[c] = pd.to_numeric(df_sub[c], errors="coerce").fillna(0).astype(int)
+
+            # Merge monthly data and add to totals
+            df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left", suffixes=("", "_month"))
+
+            for c in avail_cols:
+                if f"{c}_month" in df_hasil.columns:
+                    df_hasil[c] = df_hasil[c] + df_hasil[f"{c}_month"].fillna(0).astype(int)
+                    df_hasil.drop(columns=[f"{c}_month"], inplace=True)
+
+    # 3. Clean up final output DataFrame
+    df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=[selected_siswa_cols[0]])
+    df_hasil.index = range(1, len(df_hasil) + 1)
+
+    return df_hasil
+
 # --- NAVIGATION TABS ---
 tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs(
     [
@@ -214,20 +291,18 @@ with tab_to_utbk:
 with tab_kehadiran:
     st.header("Ekstrak Kehadiran")
     uploaded_siswa_2 = st.file_uploader(
-        "Upload File Excel Nama Siswa",
+        "Upload File Excel Nama Siswa / Kehadiran",
         type=["xlsx", "xls", "xlsm"],
         key="uploader_kehadiran_siswa",
     )
-    
+
     if uploaded_siswa_2 is None:
         st.info("Silakan upload file Excel untuk melanjutkan.")
     else:
-        # 1. FIXED: Removed quotes around uploaded variables
         excel_siswa_2 = pd.ExcelFile(uploaded_siswa_2)
 
-        # 2. FIXED: Changed excel_sheet -> excel_siswa_2
         selected_sheet_siswa_2 = st.selectbox(
-            "Pilih Sheet Siswa:",
+            "Pilih Sheet Data Siswa Utama:",
             excel_siswa_2.sheet_names,
             key="sheet_siswa_select_2",
         )
@@ -252,18 +327,39 @@ with tab_kehadiran:
         )
         bulan_angka = selected_bulan.index(bulan_terpilih) + 1
 
-        # 3. FIXED: Defined `cols` and initialized `selecting` dictionary
-        cols = st.columns(bulan_angka)
+        # Select sheets for each month
+        st.subheader("Pilih Sheet Kehadiran Tiap Bulan")
+        cols = st.columns(min(bulan_angka, 4))  # Grid layout max 4 cols per row
         selecting = {}
 
-        # 4. FIXED: Added colons (:), fixed .sheet_names reference, and added unique key
         for i in range(bulan_angka):
-            with cols[i]:
+            col_idx = i % 4
+            with cols[col_idx]:
                 selecting[selected_bulan[i]] = st.selectbox(
-                    f"Kehadiran Bulan {selected_bulan[i]}",
-                    excel_siswa_2.sheet_names,  # Uses pd.ExcelFile sheet names
-                    key=f"select_sheet_kehadiran_{i}",  # Unique key for loop
+                    f"Bulan {selected_bulan[i]}",
+                    excel_siswa_2.sheet_names,
+                    key=f"select_sheet_kehadiran_{i}",
                 )
+
+        target_sheets = list(selecting.values())
+
+        # Process execution outside the selection loop
+        df_hasil_kehadiran = process_kehadiran(
+            uploaded_siswa_2, selected_sheet_siswa_2, target_sheets
+        )
+
+        st.subheader("Tabel Rekap Kehadiran Siswa")
+        st.dataframe(df_hasil_kehadiran, use_container_width=True)
+
+        excel_bytes_kehadiran = convert_df_to_excel(
+            df_hasil_kehadiran, sheet_name="Hasil Kehadiran"
+        )
+        st.download_button(
+            label="Download Rekap Kehadiran",
+            data=excel_bytes_kehadiran,
+            file_name="Rekap_Kehadiran_Siswa.xlsx",
+            key="download_kehadiran",
+        )
 
 with tab_binsik:
     st.header("Ekstrak Nilai Binsik")
