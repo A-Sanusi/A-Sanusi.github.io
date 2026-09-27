@@ -20,7 +20,6 @@ def process_database(uploaded_file):
 
     selected_columns = [
         "NAMA SISWA",
-        "NAMA LENGKAP",
         "NAMA AKUN TO",
         "ASAL SEKOLAH",
         "JURUSAN",
