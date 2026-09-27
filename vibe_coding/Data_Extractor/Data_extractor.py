@@ -232,7 +232,87 @@ def calculate_total_kehadiran(df_monthly):
   df_total.index = df_monthly.index
   return df_total
 
-# --- NAVIGATION TABS ---
+def process_binsik(uploaded_siswa_3, uploaded_binsik, selected_sheet_binsik):
+    df_siswa_raw = pd.read_excel(uploaded_siswa_3, sheet_name="DATA BASE")
+    df_siswa = df_siswa_raw.dropna(how="all").copy()
+    df_siswa.columns = df_siswa.columns.astype(str).str.strip()
+    selected_siswa_cols = ["NAMA SISWA"]
+
+    col_siswa_akun = (
+    "NAMA AKUN TO"
+    if "NAMA AKUN TO" in df_siswa.columns
+    else ("NAMA AKUN" if "NAMA AKUN" in df_siswa.columns else df_siswa.columns[1])
+    )
+
+    df_siswa["key_match"] = (
+        df_siswa[col_siswa_akun].astype(str).str.strip().str.lower()
+    )
+
+    df_hasil = df_siswa[selected_siswa_cols + ["key_match"]].copy()
+
+    excel_binsik = pd.read_excel(uploaded_binsik, sheet_name=selected_sheet_binsik)
+    selected_binsik_cols = [
+        "JUMLAH LARI",
+        "JUMLAH SHUTTLE RUN",
+        "JUMLAH PUSH UP",
+        "JUMLAH SIT UP",
+        "JUMLAH PULL UP",
+        "JUMLAH CHINNING UP",
+        "NILAI LARI",
+        "NILAI SHUTTLE RUN",
+        "NILAI PUSH UP",
+        "NILAI SIT UP",
+        "NILAI PULL UP",
+        "NILAI CHINNING UP"    
+        "T-SCORE"
+        "KELULUSAN"                
+        ]
+
+    df_nilai_raw = pd.read_excel(
+        uploaded_binsik, sheet_name=selected_sheet_binsik, header=2
+    ).dropna(how="all")
+
+    df_nilai_raw.columns = df_nilai_raw.columns.astype(str).str.strip()
+
+    col_to_akun = next(
+        (c for c in ["NAMA SISWA"] if c in df_nilai_raw.columns),
+        df_nilai_raw.columns[1],
+    )
+
+    df_nilai_raw["key_match"] = (
+        df_nilai_raw[col_to_akun]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
+
+    # Filter present score columns
+    available_score_cols = [c for c in selected_to_cols if c in df_nilai_raw.columns]
+    df_sub = df_nilai_raw[
+        ["key_match"] + available_score_cols
+    ].drop_duplicates(subset=["key_match"]).copy()
+
+    rename_map = {
+        "JUMLAH LARI": f"Jumlah Lari_{sheet}",
+        "JUMLAH SHUTTLE RUN": f"Shuttle Run_{sheet}",
+        "JUMLAH PUSH UP": f"Push Up_{sheet}",
+        "JUMLAH SIT UP": f"Jumlah Sit Up_{sheet}",
+        "JUMLAH PULL UP": f"Jumlah Pull Up_{sheet}",
+        "JUMLAH CHINNING UP": f"Jumlah Chinning Up_{sheet}",
+        "NILAI LARI": f"Nilai Lari_{sheet}",
+        "NILAI SHUTTLE RUN": f"Nilai Shuttle Run_{sheet}",
+        "NILAI PUSH UP": f"Nilai Push Up_{sheet}",
+        "NILAI SIT UP": f"Nilai Sit Up_{sheet}",
+        "NILAI PULL UP": f"Nilai Pull Up_{sheet}",
+        "NILAI CHINNING UP": f"Nilai Chinning Up_{sheet}",
+        "T-SCORE": f"Total Skor_{sheet}",
+        "KELULUSAN": f"Kelulusan_{sheet}", 
+    }
+    df_sub = df_sub.rename(columns=rename_map)
+
+    # Merge per subtest sheet
+    df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
+
 tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs(
     [
         "🔴 Ekstrak Database",
@@ -244,7 +324,6 @@ tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs
     ]
 )
 
-#Tab_database
 with tab_db:
     st.header("Ekstrak Database")
     uploaded_db = st.file_uploader(
@@ -267,7 +346,6 @@ with tab_db:
             key="download_db",
         )
 
-#Tab_TKA
 with tab_to_tka:
     st.header("Nilai TO Kini ada Ekstraknya 🟣")
 
@@ -425,4 +503,54 @@ with tab_kehadiran:
 
 with tab_binsik:
     st.header("Ekstrak Nilai Binsik")
-    st.info("Coming Soon")
+
+    col_binsik_1, col_binsik_2 = st.columns(2)
+    with col_binsik_1:
+        uploaded_siswa_3 = st.file_uploader(
+            "Upload Excel Nama Siswa"
+            type=["xlsx", "xls", "xlsm"],
+            key="uploader_kehadiran_siswa_3",
+        )
+
+    with col_binsik_2:
+        uploaded_binsik = st.file_uploader(
+            "Upload File Binsik Siswa"
+            type=["xlsx", "xls", "xlsm"],
+            key="uploader_binsik"
+        )
+
+    if uploaded_siswa_3 is None or uploaded_binsik is None:
+        st.info("Silakan upload kedua file Excel untuk melanjutkan")
+    else:
+        excel_siswa_3 = pd.ExcelFile(uploaded_siswa_3)
+        
+        selected_sheet_siswa_3 = st.selectbox(
+            "Pilih Sheet Data Siswa Utama:",
+            excel_siswa_3.sheet_names,
+            key="sheet_siswa_select_3"
+        )
+
+        excel_binsik = pdf.ExcelFile(uploaded_binsik)
+
+        selected_sheet_binsik = st.selectbox(
+            "Pilih Data Binsik:",
+            excel_binsik.sheet_names,
+            key="sheet_binsik"
+        )
+
+    df_hasil_binsik = process_binsik(uploaded_siswa_3, uploaded_binsik, selected_sheet_binsik)
+
+    st.subheader("Tabel Nilai Binsik Siswa")
+    st.dataframe(df_hasil_binsik, use_container_width=True)
+
+    excel_bytes_to = convert_df_to_excel(
+        df_hasil, sheet_name="Hasil Nilai Binsik"
+    )
+    st.download_button(
+        label="Download Hasil Nilai",
+        data=excel_bytes_to,
+        file_name="Hasil_Nilai_Binsik.xlsx",
+        key="download_binsik",
+    )
+
+    
