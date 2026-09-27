@@ -293,20 +293,20 @@ def process_binsik(uploaded_siswa_3, uploaded_binsik, selected_sheet_binsik):
     ].drop_duplicates(subset=["key_match"]).copy()
 
     rename_map = {
-        "JUMLAH LARI": f"Jumlah Lari_{sheet}",
-        "JUMLAH SHUTTLE RUN": f"Shuttle Run_{sheet}",
-        "JUMLAH PUSH UP": f"Push Up_{sheet}",
-        "JUMLAH SIT UP": f"Jumlah Sit Up_{sheet}",
-        "JUMLAH PULL UP": f"Jumlah Pull Up_{sheet}",
-        "JUMLAH CHINNING UP": f"Jumlah Chinning Up_{sheet}",
-        "NILAI LARI": f"Nilai Lari_{sheet}",
-        "NILAI SHUTTLE RUN": f"Nilai Shuttle Run_{sheet}",
-        "NILAI PUSH UP": f"Nilai Push Up_{sheet}",
-        "NILAI SIT UP": f"Nilai Sit Up_{sheet}",
-        "NILAI PULL UP": f"Nilai Pull Up_{sheet}",
-        "NILAI CHINNING UP": f"Nilai Chinning Up_{sheet}",
-        "T-SCORE": f"Total Skor_{sheet}",
-        "KELULUSAN": f"Kelulusan_{sheet}", 
+        "JUMLAH LARI": f"Jumlah Lari_{selected_sheet_binsik}",
+        "JUMLAH SHUTTLE RUN": f"Shuttle Run_{selected_sheet_binsik}",
+        "JUMLAH PUSH UP": f"Push Up_{selected_sheet_binsik}",
+        "JUMLAH SIT UP": f"Jumlah Sit Up_{selected_sheet_binsik}",
+        "JUMLAH PULL UP": f"Jumlah Pull Up_{selected_sheet_binsik}",
+        "JUMLAH CHINNING UP": f"Jumlah Chinning Up_{selected_sheet_binsik}",
+        "NILAI LARI": f"Nilai Lari_{selected_sheet_binsik}",
+        "NILAI SHUTTLE RUN": f"Nilai Shuttle Run_{selected_sheet_binsik}",
+        "NILAI PUSH UP": f"Nilai Push Up_{selected_sheet_binsik}",
+        "NILAI SIT UP": f"Nilai Sit Up_{selected_sheet_binsik}",
+        "NILAI PULL UP": f"Nilai Pull Up_{selected_sheet_binsik}",
+        "NILAI CHINNING UP": f"Nilai Chinning Up_{selected_sheet_binsik}",
+        "T-SCORE": f"Total Skor_{selected_sheet_binsik}",
+        "KELULUSAN": f"Kelulusan_{selected_sheet_binsik}", 
     }
     df_sub = df_sub.rename(columns=rename_map)
 
