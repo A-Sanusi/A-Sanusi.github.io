@@ -113,29 +113,39 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
     return df_hasil
 
 def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
-    """Processes attendance data from target sheets and sums attendance per student."""
+    """Extracts existing attendance columns from each monthly sheet
+
+    without summing them, appending the sheet name to column headers.
+    """
     # 1. Load base student list
-    df_siswa_raw = pd.read_excel(uploaded_file, sheet_name=sheet_siswa, header=0)
+    df_siswa_raw = pd.read_excel(
+        uploaded_file, sheet_name=sheet_siswa, header=0
+    )
     df_siswa = df_siswa_raw.dropna(how="all").copy()
     df_siswa.columns = df_siswa.columns.astype(str).str.strip()
 
-    selected_siswa_cols = [c for c in ["NAMA SISWA"] if c in df_siswa.columns]
+    selected_siswa_cols = [
+        c for c in ["NAMA SISWA", "NAMA AKUN TO"] if c in df_siswa.columns
+    ]
     if not selected_siswa_cols:
         selected_siswa_cols = [df_siswa.columns[0]]
 
-    # Detect student account column dynamically
+    # Detect student account column
     col_siswa_akun = next(
-        (c for c in ["NAMA SISWA"] if c in df_siswa.columns),
+        (
+            c
+            for c in ["NAMA AKUN TO", "NAMA AKUN", "NAMA SISWA"]
+            if c in df_siswa.columns
+        ),
         df_siswa.columns[0],
     )
 
     df_siswa["key_match"] = (
         df_siswa[col_siswa_akun].astype(str).str.strip().str.lower()
     )
-
     df_hasil = df_siswa[selected_siswa_cols + ["key_match"]].copy()
 
-    # Target attendance columns to extract
+    # Define target attendance headers to pull
     target_cols = [
         "KBM HADIR",
         "KBM IZIN",
@@ -145,46 +155,51 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
         "BINSIK ALPA",
     ]
 
-    # Initialize total counts with 0
-    for col in target_cols:
-        df_hasil[col] = 0
-
     excel_file = pd.ExcelFile(uploaded_file)
 
-    # 2. Iterate through each selected monthly sheet & sum attendance counts
+    # 2. Extract existing columns sheet by sheet
     for sheet in target_sheets:
         if sheet in excel_file.sheet_names:
-            df_sheet_raw = pd.read_excel(uploaded_file, sheet_name=sheet).dropna(how="all")
+            # Change header=0 to header=7 if headers start on line 8 in your Excel sheet
+            df_sheet_raw = pd.read_excel(
+                uploaded_file, sheet_name=sheet, header=0
+            ).dropna(how="all")
             df_sheet_raw.columns = df_sheet_raw.columns.astype(str).str.strip()
 
-            # Detect matching name/account column in monthly sheet
             col_sheet_akun = next(
-                (c for c in ["NAMA SISWA"] if c in df_sheet_raw.columns),
+                (
+                    c
+                    for c in ["NAMA AKUN TO", "NAMA AKUN", "NAMA SISWA"]
+                    if c in df_sheet_raw.columns
+                ),
                 df_sheet_raw.columns[0],
             )
 
             df_sheet_raw["key_match"] = (
-                df_sheet_raw[col_sheet_akun].astype(str).str.strip().str.lower()
+                df_sheet_raw[col_sheet_akun]
+                .astype(str)
+                .str.strip()
+                .str.lower()
             )
 
-            # Keep available target columns
+            # Filter present attendance columns
             avail_cols = [c for c in target_cols if c in df_sheet_raw.columns]
-            df_sub = df_sheet_raw[["key_match"] + avail_cols].drop_duplicates(subset=["key_match"]).copy()
+            df_sub = df_sheet_raw[["key_match"] + avail_cols].drop_duplicates(
+                subset=["key_match"]
+            )
 
-            # Convert to numeric values
-            for c in avail_cols:
-                df_sub[c] = pd.to_numeric(df_sub[c], errors="coerce").fillna(0).astype(int)
+            # Rename columns to include month name (e.g., KBM HADIR (SEPTEMBER))
+            rename_map = {c: f"{c} ({sheet})" for c in avail_cols}
+            df_sub = df_sub.rename(columns=rename_map)
 
-            # Merge monthly data and add to totals
-            df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left", suffixes=("", "_month"))
+            # Direct left merge
+            df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
 
-            for c in avail_cols:
-                if f"{c}_month" in df_hasil.columns:
-                    df_hasil[c] = df_hasil[c] + df_hasil[f"{c}_month"].fillna(0).astype(int)
-                    df_hasil.drop(columns=[f"{c}_month"], inplace=True)
-
-    # 3. Clean up final output DataFrame
-    df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=[selected_siswa_cols[0]])
+    # 3. Clean up final result
+    df_hasil = df_hasil.drop(columns=["key_match"]).dropna(
+        subset=[selected_siswa_cols[0]]
+    )
+    df_hasil = df_hasil.fillna("-")
     df_hasil.index = range(1, len(df_hasil) + 1)
 
     return df_hasil
