@@ -233,7 +233,7 @@ def calculate_total_kehadiran(df_monthly):
     return df_total
 
 def process_binsik(uploaded_siswa_3, uploaded_binsik, sheet_siswa, selected_sheet_binsik):
-    df_siswa_raw = pd.read_excel(uploaded_siswa_3, sheet_name=sheet_siswa,  header=1)
+    df_siswa_raw = pd.read_excel(uploaded_siswa_3, sheet_name=sheet_siswa)
     df_siswa = df_siswa_raw.dropna(how="all").copy()
     df_siswa.columns = df_siswa.columns.astype(str).str.strip()
     selected_siswa_cols = ["NAMA SISWA"]
@@ -268,7 +268,7 @@ def process_binsik(uploaded_siswa_3, uploaded_binsik, sheet_siswa, selected_shee
     ]
 
     df_nilai_raw = pd.read_excel(
-        uploaded_binsik, sheet_name=selected_sheet_binsik, header=2
+        uploaded_binsik, sheet_name=selected_sheet_binsik, header=1
     ).dropna(how="all")
 
     df_nilai_raw.columns = df_nilai_raw.columns.astype(str).str.strip()
