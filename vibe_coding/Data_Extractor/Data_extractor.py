@@ -332,6 +332,17 @@ def process_binsik(
 
   return df_hasil
 
+tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs(
+    [
+        "🔴 Ekstrak Database",
+        "🟣 Ekstrak Nilai TO TKA",
+        "🔴 Ekstrak Nilai TO SKD (coming soon)",
+        "🟣 Ekstrak Nilai TO UTBK (coming soon)",
+        "🔴 Ekstrak Kehadiran",
+        "🟣 Ekstrak Nilai Binsik",
+    ]
+)
+
 with tab_db:
     st.header("Ekstrak Database")
     uploaded_db = st.file_uploader(
