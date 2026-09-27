@@ -357,7 +357,7 @@ with tab_kehadiran:
             uploaded_siswa_2, selected_sheet_siswa_2, target_sheets
         )
 
-        st.subheader("Tabel Rekap Kehadiran Siswa")
+        st.subheader("Rekap Kehadiran Siswa")
         st.dataframe(df_hasil_kehadiran, use_container_width=True)
 
         excel_bytes_kehadiran = convert_df_to_excel(
