@@ -312,6 +312,7 @@ def process_binsik(uploaded_siswa_3, uploaded_binsik, selected_sheet_binsik):
 
     # Merge per subtest sheet
     df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
+    return df_hasil
 
 tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs(
     [
