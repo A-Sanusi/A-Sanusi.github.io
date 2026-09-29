@@ -143,11 +143,14 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
     # Define target attendance headers to pull
     target_cols = [
         "KBM HADIR",
-        "KBM IZIN",
-        "KBM ALPA",
         "BINSIK HADIR",
+        "TO HADIR",
+        "KBM IZIN",
         "BINSIK IZIN",
+        "TO IZIN",
+        "KBM ALPA",
         "BINSIK ALPA",
+        "TO ALPA"
     ]
 
     excel_file = pd.ExcelFile(uploaded_file)
