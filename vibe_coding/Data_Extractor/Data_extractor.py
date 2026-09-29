@@ -208,11 +208,14 @@ def calculate_total_kehadiran(df_monthly):
 
     target_metrics = [
         "KBM HADIR",
-        "KBM IZIN",
-        "KBM ALPA",
         "BINSIK HADIR",
+        "TO HADIR",
+        "KBM IZIN",
         "BINSIK IZIN",
+        "TO IZIN",
+        "KBM ALPA",
         "BINSIK ALPA",
+        "TO ALPA"
     ]
 
     for metric in target_metrics:
