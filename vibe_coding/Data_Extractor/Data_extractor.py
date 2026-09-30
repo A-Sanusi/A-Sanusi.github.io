@@ -123,7 +123,7 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
    
     selected_siswa_cols = [
         c for c in candidates if c in df_siswa.columns
-    ][:1]
+    ]
     if not selected_siswa_cols:
         selected_siswa_cols = [df_siswa.columns[0]]
 
