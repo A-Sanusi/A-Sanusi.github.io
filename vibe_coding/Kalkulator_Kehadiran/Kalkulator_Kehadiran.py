@@ -16,7 +16,7 @@ uploaded_siswa = st.file_uploader(
 
 if uploaded_siswa is None:
     st.info("Silakan upload file Excel")
-else
+else:
     excel_siswa = pd.ExcelFile(uploaded_siswa)
     selected_sheet_siswa = st.selectbox(
         "Pilih Sheet Siswa Utama:",
