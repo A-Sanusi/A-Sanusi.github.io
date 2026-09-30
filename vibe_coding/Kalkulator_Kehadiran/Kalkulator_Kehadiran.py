@@ -58,4 +58,3 @@ else:
             )
     
     target_sheets = list(selecting.values())
-    )
