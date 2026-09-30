@@ -11,7 +11,7 @@ st.title("Kalkulator Kehadiran")
 uploaded_siswa = st.file_uploader(
     "Upload File Excel Siswa",
     type=["xlsx, xls, xlsm"],
-    key="uploader_kehadiran_siswa"
+    key="uploader_kehadiran_siswa",
 )
 
 if uploaded_siswa is None:
