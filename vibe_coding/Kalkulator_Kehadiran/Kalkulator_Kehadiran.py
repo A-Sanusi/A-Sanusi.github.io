@@ -53,7 +53,7 @@ for i in range(bulan_angka):
     with cols[col_idx]:
         selecting[selected_bulan[i]] = st.selectbox(
             f"Bulan {selected_bulan[i]}",
-            excel_siswa_2.sheet_names,
+            excel_siswa.sheet_names,
             key=f"select_sheet_kehadiran{i}",
         )
 
