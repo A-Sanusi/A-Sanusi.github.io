@@ -9,8 +9,8 @@ st.link_button("Menu", "https://a-sanusi.github.io/vibe_coding/vibe_coding.html"
 st.title("Kalkulator Kehadiran")
 
 uploaded_siswa = st.file_uploader(
-    "Upload File Excel Siswa"
-    type=["xlsx, xls, xlsm"]
+    "Upload File Excel Siswa",
+    type=["xlsx, xls, xlsm"],
     key="uploader_kehadiran_siswa"
 )
 
