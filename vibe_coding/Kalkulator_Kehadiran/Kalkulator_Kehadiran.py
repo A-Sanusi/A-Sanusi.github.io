@@ -39,22 +39,22 @@ selected_bulan = [
             "AGUSTUS",
         ]
 
-    bulan_terpilih = st.selectbox(
-        "Pilih Bulan Rapor", selected_bulan, key="bulan_kehadiran"
-    )
-    bulan_angka = selected_bulan.index(bulan_terpilih) + 1
+bulan_terpilih = st.selectbox(
+    "Pilih Bulan Rapor", selected_bulan, key="bulan_kehadiran"
+)
+bulan_angka = selected_bulan.index(bulan_terpilih) + 1
 
-    st.subheader("Pilih Sheet Kehadiran Tiap Bulan")
-    cols = st.columns(min(bulan_angka, 4))
-    selecting = {}
+st.subheader("Pilih Sheet Kehadiran Tiap Bulan")
+cols = st.columns(min(bulan_angka, 4))
+selecting = {}
 
-    for i in range(bulan_angka):
-        col_idx = i % 4
-        with cols[col_idx]:
-            selecting[selected_bulan[i]] = st.selectbox(
-                f"Bulan {selected_bulan[i]}",
-                excel_siswa_2.sheet_names,
-                key=f"select_sheet_kehadiran{i}",
-            )
+for i in range(bulan_angka):
+    col_idx = i % 4
+    with cols[col_idx]:
+        selecting[selected_bulan[i]] = st.selectbox(
+            f"Bulan {selected_bulan[i]}",
+            excel_siswa_2.sheet_names,
+            key=f"select_sheet_kehadiran{i}",
+        )
 
-    target_sheets = list(selecting.values())
+target_sheets = list(selecting.values())
