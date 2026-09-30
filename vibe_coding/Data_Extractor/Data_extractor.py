@@ -478,7 +478,7 @@ with tab_kehadiran:
         selecting = {}
 
         for i in range(bulan_angka):
-            col_idx = i % 4
+            col_idx = i
             with cols[col_idx]:
                 selecting[selected_bulan[i]] = st.selectbox(
                     f"Bulan {selected_bulan[i]}",
