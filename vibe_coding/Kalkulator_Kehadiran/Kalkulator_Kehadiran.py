@@ -22,9 +22,8 @@ else:
         "Pilih Sheet Siswa Utama:",
         excel_siswa.sheet_names,
         key = "sheet_selected_siswa"
-    )
 
-selected_bulan = [
+    selected_bulan = [
             "SEPTEMBER",
             "OKTOBER",
             "NOVEMBER",
@@ -58,3 +57,4 @@ selected_bulan = [
             )
     
     target_sheets = list(selecting.values())
+    )
