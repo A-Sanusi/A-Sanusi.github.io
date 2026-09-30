@@ -119,9 +119,11 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
     df_siswa = df_siswa_raw.dropna(how="all").copy()
     df_siswa.columns = df_siswa.columns.astype(str).str.strip()
 
+    candidates = ["NAMA LENGKAP", "NAMA SISWA"]
+   
     selected_siswa_cols = [
-        c for c in ["NAMA SISWA"] if c in df_siswa.columns
-    ]
+        c for c in candidates if c in df_siswa.columns
+    ][:1]
     if not selected_siswa_cols:
         selected_siswa_cols = [df_siswa.columns[0]]
 
@@ -478,7 +480,7 @@ with tab_kehadiran:
         selecting = {}
 
         for i in range(bulan_angka):
-            col_idx = i
+            col_idx = i % 4
             with cols[col_idx]:
                 selecting[selected_bulan[i]] = st.selectbox(
                     f"Bulan {selected_bulan[i]}",
