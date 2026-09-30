@@ -21,7 +21,8 @@ else:
     selected_sheet_siswa = st.selectbox(
         "Pilih Sheet Siswa Utama:",
         excel_siswa.sheet_names,
-        key = "sheet_selected_siswa"
+        key = "sheet_selected_siswa",
+    )
 
     selected_bulan = [
             "SEPTEMBER",
