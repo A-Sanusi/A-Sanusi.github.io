@@ -700,19 +700,16 @@ with tab_kehadiran:
                 x="KELAS",
                 y="Persentase Kehadiran (%)",
                 title="Persentase Kehadiran per Kelas",
-                text="Persentase Kehadiran (%)",
-                color="Persentase Kehadiran (%)",
-                color_continuous_scale="Blues",
                 labels={
                     "KELAS": "Kelas",
-                    "Persentase Kehadiran (%)": "Persentase (%)",
+                    "Persentase Kehadiran (%)": "Persentase Kehadiran (%)",
                 },
+                text_auto=".2f",
             )
-            fig_kehadiran.update_traces(
-                texttemplate="%{text:.2f}%", textposition="outside"
-            )
+
             fig_kehadiran.update_layout(
-                yaxis_range=[0, 105],
+                xaxis_title="Kelas",
+                yaxis_title="Persentase Kehadiran (%)",
                 margin=dict(l=20, r=20, t=50, b=20),
             )
 
