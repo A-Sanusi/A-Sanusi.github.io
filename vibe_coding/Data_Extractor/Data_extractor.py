@@ -37,6 +37,7 @@ def process_database(uploaded_file) -> pd.DataFrame:
       "JURUSAN",
       "PROGRAM BELAJAR",
       "KELAS (DI PRIORITY)",
+      "SISWA (DI PRIORITY)",
       "MINAT PTN",
       "MINAT SEKOLAH KEDINASAN",
   ]
@@ -65,7 +66,12 @@ def process_to_tka(
 
   selected_siswa_cols = [
       c
-      for c in ["NAMA SISWA", "NAMA AKUN TO", "KELAS (DI PRIORITY)"]
+      for c in [
+          "NAMA SISWA",
+          "NAMA AKUN TO",
+          "KELAS (DI PRIORITY)",
+          "SISWA (DI PRIORITY)",
+      ]
       if c in df_siswa.columns
   ]
 
@@ -160,7 +166,15 @@ def process_kehadiran(
   df_siswa = df_siswa_raw.dropna(how="all").copy()
   df_siswa.columns = df_siswa.columns.astype(str).str.strip()
 
-  selected_siswa_cols = [c for c in ["NAMA SISWA"] if c in df_siswa.columns]
+  selected_siswa_cols = [
+      c
+      for c in [
+          "NAMA SISWA",
+          "SISWA (DI PRIORITY)",
+          "KELAS (DI PRIORITY)",
+      ]
+      if c in df_siswa.columns
+  ]
   if not selected_siswa_cols:
     selected_siswa_cols = [df_siswa.columns[0]]
 
@@ -232,13 +246,6 @@ def process_kehadiran(
 
 def calculate_total_kehadiran(df_monthly: pd.DataFrame) -> pd.DataFrame:
   """Calculates total attendance metrics per student into a summary DataFrame."""
-  col_siswa = (
-      "NAMA SISWA"
-      if "NAMA SISWA" in df_monthly.columns
-      else df_monthly.columns[0]
-  )
-  df_total = pd.DataFrame({col_siswa: df_monthly[col_siswa]})
-
   target_metrics = [
       "KBM HADIR",
       "BINSIK HADIR",
@@ -250,6 +257,15 @@ def calculate_total_kehadiran(df_monthly: pd.DataFrame) -> pd.DataFrame:
       "BINSIK ALPA",
       "TO ALPA",
   ]
+
+  # Preserve all non-monthly metric columns (NAMA SISWA, SISWA (DI PRIORITY), etc.)
+  info_cols = [
+      col
+      for col in df_monthly.columns
+      if not any(col.startswith(f"{m} (") for m in target_metrics)
+  ]
+
+  df_total = df_monthly[info_cols].copy()
 
   for metric in target_metrics:
     matching_cols = [
@@ -475,17 +491,23 @@ with tab_to_tka:
           col for col in df_hasil.columns if col.startswith("Nilai ")
       ]
 
-      if score_cols and "KELAS (DI PRIORITY)" in df_hasil.columns:
+      kelas_col = next(
+          (
+              c
+              for c in ["KELAS (DI PRIORITY)", "SISWA (DI PRIORITY)"]
+              if c in df_hasil.columns
+          ),
+          None,
+      )
+
+      if score_cols and kelas_col:
         df_calc = df_hasil.copy()
 
         for col in score_cols:
           df_calc[col] = pd.to_numeric(df_calc[col], errors="coerce")
 
         df_avg_kelas = (
-            df_calc.groupby("KELAS (DI PRIORITY)")[score_cols]
-            .mean()
-            .round(2)
-            .reset_index()
+            df_calc.groupby(kelas_col)[score_cols].mean().round(2).reset_index()
         )
         df_avg_kelas.index = range(1, len(df_avg_kelas) + 1)
         df_avg_kelas.index.name = "No"
@@ -495,12 +517,12 @@ with tab_to_tka:
         # Plotly Bar Chart
         fig = px.bar(
             df_avg_kelas,
-            x="KELAS (DI PRIORITY)",
+            x=kelas_col,
             y=score_cols,
             barmode="group",
             title="Rata-Rata Nilai Try Out per Kelas",
             labels={
-                "KELAS (DI PRIORITY)": "Kelas",
+                kelas_col: "Kelas",
                 "value": "Nilai Rata-Rata",
                 "variable": "Subtes TO",
             },
