@@ -478,9 +478,7 @@ with tab_to_tka:
             for col in score_cols:
                 df_calc[col] = pd.to_numeric(df_calc[col], errors="coerce")
 
-            df_calc["Rata-Rata Overall"] = df_calc[score_cols].mean(axis=1)
-
-            cols_to_avg = score_cols + ["Rata-Rata Overall"]
+            cols_to_avg = score_cols
 
             df_avg_kelas = (
                 df_calc.groupby("KELAS (DI PRIORITY)")[cols_to_avg]
@@ -493,12 +491,12 @@ with tab_to_tka:
 
             st.dataframe(df_avg_kelas, use_container_width=True)
 
-            # --- PLOTLY EXPRESS CHART ---
-            fig = px.bar(
+            # --- PLOTLY EXPRESS LINE CHART ---
+            fig = px.line(
                 df_avg_kelas,
                 x="KELAS (DI PRIORITY)",
                 y=cols_to_avg,
-                barmode="group",
+                markers=True,
                 title="Rata-Rata Nilai Try Out per Kelas",
                 labels={
                     "KELAS (DI PRIORITY)": "Kelas",
