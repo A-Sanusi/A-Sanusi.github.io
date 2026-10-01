@@ -20,7 +20,6 @@ def process_database(uploaded_file) -> pd.DataFrame:
   """Processes the database excel sheet and returns extracted student records."""
   excel_file = pd.ExcelFile(uploaded_file)
 
-  # Flexible sheet detection for DATA BASE
   target_sheet = next(
       (s for s in excel_file.sheet_names if s.strip().upper() == "DATA BASE"),
       excel_file.sheet_names[0],
@@ -37,12 +36,10 @@ def process_database(uploaded_file) -> pd.DataFrame:
       "JURUSAN",
       "PROGRAM BELAJAR",
       "KELAS (DI PRIORITY)",
-      "SISWA (DI PRIORITY)",
       "MINAT PTN",
       "MINAT SEKOLAH KEDINASAN",
   ]
 
-  # Safe column selection (prevents KeyError if a column is missing)
   available_cols = [c for c in selected_columns if c in df_siswa.columns]
   df_merged = df_siswa[available_cols].copy()
 
@@ -59,7 +56,6 @@ def process_to_tka(
   excel_siswa = pd.ExcelFile(uploaded_siswa)
   excel_to = pd.ExcelFile(uploaded_to)
 
-  # 1. Load student list
   df_siswa_raw = excel_siswa.parse(sheet_name=sheet_siswa, header=0)
   df_siswa = df_siswa_raw.dropna(how="all").copy()
   df_siswa.columns = df_siswa.columns.astype(str).str.strip()
@@ -70,12 +66,10 @@ def process_to_tka(
           "NAMA SISWA",
           "NAMA AKUN TO",
           "KELAS (DI PRIORITY)",
-          "SISWA (DI PRIORITY)",
       ]
       if c in df_siswa.columns
   ]
 
-  # Detect student account column dynamically
   col_siswa_akun = next(
       (c for c in ["NAMA AKUN TO", "NAMA AKUN"] if c in df_siswa.columns),
       df_siswa.columns[1] if len(df_siswa.columns) > 1 else df_siswa.columns[0],
@@ -85,10 +79,8 @@ def process_to_tka(
       df_siswa[col_siswa_akun].fillna("").astype(str).str.strip().str.lower()
   )
 
-  # Keep requested student columns + key_match
   df_hasil = df_siswa[selected_siswa_cols + ["key_match"]].copy()
 
-  # 2. Extract scores from chosen subtest sheets using cached excel_to parser
   selected_to_cols = ["TOTAL BENAR", "NILAI", "KATEGORI"]
 
   for sheet in target_sheets:
@@ -98,7 +90,6 @@ def process_to_tka(
       )
       df_nilai_raw.columns = df_nilai_raw.columns.astype(str).str.strip()
 
-      # Detect account/name column in TO sheet
       col_to_akun = next(
           (
               c
@@ -118,7 +109,6 @@ def process_to_tka(
           .str.lower()
       )
 
-      # Filter present score columns
       available_score_cols = [
           c for c in selected_to_cols if c in df_nilai_raw.columns
       ]
@@ -133,7 +123,6 @@ def process_to_tka(
             .astype("Int64")
         )
 
-      # Rename columns per subtest sheet
       rename_map = {
           "TOTAL BENAR": f"Jumlah_Nilai_Benar {sheet}",
           "NILAI": f"Nilai {sheet}",
@@ -141,10 +130,8 @@ def process_to_tka(
       }
       df_sub = df_sub.rename(columns=rename_map)
 
-      # Merge per subtest sheet
       df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
 
-  # 3. Clean final result DataFrame
   df_hasil = df_hasil.drop(columns=["key_match"])
   if "NAMA SISWA" in df_hasil.columns:
     df_hasil = df_hasil.dropna(subset=["NAMA SISWA"])
@@ -170,8 +157,8 @@ def process_kehadiran(
       c
       for c in [
           "NAMA SISWA",
-          "SISWA (DI PRIORITY)",
           "KELAS (DI PRIORITY)",
+          "KELAS",
       ]
       if c in df_siswa.columns
   ]
@@ -187,6 +174,9 @@ def process_kehadiran(
       df_siswa[col_siswa_akun].fillna("").astype(str).str.strip().str.lower()
   )
   df_hasil = df_siswa[selected_siswa_cols + ["key_match"]].copy()
+
+  # RENAME HEADER FOR KEHADIRAN HERE
+  df_hasil = df_hasil.rename(columns={"KELAS (DI PRIORITY)": "KELAS"})
 
   # Target attendance headers
   target_cols = [
@@ -222,7 +212,6 @@ def process_kehadiran(
           .str.lower()
       )
 
-      # Filter present attendance columns
       avail_cols = [c for c in target_cols if c in df_sheet_raw.columns]
       df_sub = df_sheet_raw[["key_match"] + avail_cols].drop_duplicates(
           subset=["key_match"]
@@ -234,9 +223,11 @@ def process_kehadiran(
       df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
 
   # 3. Clean up final result
-  df_hasil = df_hasil.drop(columns=["key_match"]).dropna(
-      subset=[selected_siswa_cols[0]]
-  )
+  first_col = selected_siswa_cols[0]
+  if first_col in df_hasil.columns:
+    df_hasil = df_hasil.dropna(subset=[first_col])
+
+  df_hasil = df_hasil.drop(columns=["key_match"])
   df_hasil = df_hasil.fillna("0").astype(str)
   df_hasil.index = range(1, len(df_hasil) + 1)
   df_hasil.index.name = "No"
@@ -258,7 +249,6 @@ def calculate_total_kehadiran(df_monthly: pd.DataFrame) -> pd.DataFrame:
       "TO ALPA",
   ]
 
-  # Preserve all non-monthly metric columns (NAMA SISWA, SISWA (DI PRIORITY), etc.)
   info_cols = [
       col
       for col in df_monthly.columns
@@ -370,14 +360,12 @@ def process_binsik(
   }
   df_sub = df_sub.rename(columns=rename_map)
 
-  # Rounding logic for T-Score
   score_cols = [col for col in df_sub.columns if col.startswith("Total Skor")]
   for col in score_cols:
     df_sub[col] = pd.to_numeric(df_sub[col], errors="coerce").round(2)
 
   df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
 
-  # Final cleanup
   df_hasil = df_hasil.drop(columns=["key_match"])
   if selected_siswa_cols[0] in df_hasil.columns:
     df_hasil = df_hasil.dropna(subset=[selected_siswa_cols[0]])
@@ -463,12 +451,10 @@ with tab_to_tka:
     if not target_subtests:
       st.warning("Pilih minimal 1 subtes.")
     else:
-      # 1. Process Student Scores
       df_hasil = process_to_tka(
           uploaded_siswa, uploaded_to, selected_sheet_siswa, target_subtests
       )
 
-      # 2. Display Individual Student Results
       st.subheader("Tabel Nilai Siswa")
       st.dataframe(df_hasil, use_container_width=True)
 
@@ -484,7 +470,6 @@ with tab_to_tka:
 
       st.divider()
 
-      # 3. Calculate & Display Average per KELAS
       st.subheader("Rata-Rata Nilai per Kelas")
 
       score_cols = [
@@ -494,7 +479,7 @@ with tab_to_tka:
       kelas_col = next(
           (
               c
-              for c in ["KELAS (DI PRIORITY)", "SISWA (DI PRIORITY)"]
+              for c in ["KELAS (DI PRIORITY)"]
               if c in df_hasil.columns
           ),
           None,
@@ -514,7 +499,6 @@ with tab_to_tka:
 
         st.dataframe(df_avg_kelas, use_container_width=True)
 
-        # Plotly Bar Chart
         fig = px.bar(
             df_avg_kelas,
             x=kelas_col,
@@ -612,15 +596,12 @@ with tab_kehadiran:
 
     target_sheets = list(selecting.values())
 
-    # Generate Monthly DataFrame
     df_hasil_kehadiran = process_kehadiran(
         uploaded_siswa_2, selected_sheet_siswa_2, target_sheets
     )
 
-    # Generate Total Summary
     df_total_kehadiran = calculate_total_kehadiran(df_hasil_kehadiran)
 
-    # Table 1: Monthly Breakdown
     st.subheader("Rekap Kehadiran Siswa Per Bulan")
     st.dataframe(df_hasil_kehadiran, use_container_width=True)
 
@@ -636,7 +617,6 @@ with tab_kehadiran:
 
     st.divider()
 
-    # Table 2: Total Summary
     st.subheader("Rekap TOTAL Kehadiran Siswa")
     st.dataframe(df_total_kehadiran, use_container_width=True)
 
