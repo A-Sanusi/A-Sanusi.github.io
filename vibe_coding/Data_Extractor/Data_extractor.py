@@ -275,7 +275,7 @@ def calculate_total_kehadiran(df_monthly: pd.DataFrame) -> pd.DataFrame:
 
 
 def calculate_kehadiran_per_kelas(df_total: pd.DataFrame) -> pd.DataFrame:
-    """Calculates attendance percentage grouped by class."""
+    """Calculates attendance percentage grouped by class, including an overall total summary."""
     df_calc = df_total.copy()
 
     hadir_cols = [
@@ -324,6 +324,26 @@ def calculate_kehadiran_per_kelas(df_total: pd.DataFrame) -> pd.DataFrame:
     df_kelas["Persentase Kehadiran (%)"] = (
         (df_kelas["Total_Hadir"] / df_kelas["Total_Pertemuan"]) * 100
     ).round(2).fillna(0)
+
+    # Calculate overall total across all classes
+    tot_siswa = df_kelas["Jumlah_Siswa"].sum()
+    tot_hadir = df_kelas["Total_Hadir"].sum()
+    tot_izin = df_kelas["Total_Izin"].sum()
+    tot_alpa = df_kelas["Total_Alpa"].sum()
+    tot_pertemuan = df_kelas["Total_Pertemuan"].sum()
+    tot_persen = round((tot_hadir / tot_pertemuan * 100), 2) if tot_pertemuan > 0 else 0.0
+
+    total_row = pd.DataFrame([{
+        kelas_col: "TOTAL SEMUA KELAS",
+        "Jumlah_Siswa": tot_siswa,
+        "Total_Hadir": tot_hadir,
+        "Total_Izin": tot_izin,
+        "Total_Alpa": tot_alpa,
+        "Total_Pertemuan": tot_pertemuan,
+        "Persentase Kehadiran (%)": tot_persen,
+    }])
+
+    df_kelas = pd.concat([df_kelas, total_row], ignore_index=True)
 
     df_kelas.index = range(1, len(df_kelas) + 1)
     df_kelas.index.name = "No"
@@ -693,27 +713,16 @@ with tab_kehadiran:
         df_kehadiran_kelas = calculate_kehadiran_per_kelas(df_total_kehadiran)
 
         if not df_kehadiran_kelas.empty:
+            # Display overall percentage total across all classes
+            total_row = df_kehadiran_kelas[df_kehadiran_kelas["KELAS"] == "TOTAL SEMUA KELAS"]
+            if not total_row.empty:
+                overall_pct = total_row["Persentase Kehadiran (%)"].values[0]
+                st.metric(
+                    label="Total Persentase Kehadiran Semua Kelas",
+                    value=f"{overall_pct:.2f}%",
+                )
+
             st.dataframe(df_kehadiran_kelas, use_container_width=True)
-
-            fig_kehadiran = px.bar(
-                df_kehadiran_kelas,
-                x="KELAS",
-                y="Persentase Kehadiran (%)",
-                title="Persentase Kehadiran per Kelas",
-                labels={
-                    "KELAS": "Kelas",
-                    "Persentase Kehadiran (%)": "Persentase Kehadiran (%)",
-                },
-                text_auto=".2f",
-            )
-
-            fig_kehadiran.update_layout(
-                xaxis_title="Kelas",
-                yaxis_title="Persentase Kehadiran (%)",
-                margin=dict(l=20, r=20, t=50, b=20),
-            )
-
-            st.plotly_chart(fig_kehadiran, use_container_width=True)
 
             excel_bytes_kelas = convert_df_to_excel(
                 df_kehadiran_kelas, sheet_name="Kehadiran per Kelas"
