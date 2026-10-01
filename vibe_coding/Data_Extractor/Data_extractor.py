@@ -695,37 +695,7 @@ with tab_kehadiran:
 
         if not df_kehadiran_kelas.empty:
             st.dataframe(df_kehadiran_kelas, use_container_width=True)
-
-            # Interactive Plotly Bar Chart for Class Totals
-            hadir_cols = [
-                c for c in df_kehadiran_kelas.columns if c.endswith("HADIR") and c.startswith("TOTAL")
-            ]
-            if hadir_cols:
-                # Exclude the 'TOTAL OVERALL' row for the chart comparison
-                df_chart = df_kehadiran_kelas[
-                    df_kehadiran_kelas["KELAS"] != "TOTAL OVERALL"
-                ].copy()
-
-                fig_kehadiran = px.bar(
-                    df_chart,
-                    x="KELAS",
-                    y=hadir_cols,
-                    barmode="group",
-                    title="Total Kehadiran Siswa (HADIR) per Kelas",
-                    labels={
-                        "KELAS": "Kelas",
-                        "value": "Jumlah Kehadiran",
-                        "variable": "Kategori",
-                    },
-                    text_auto=True,
-                )
-                fig_kehadiran.update_layout(
-                    xaxis_title="Kelas",
-                    yaxis_title="Jumlah Kehadiran",
-                    margin=dict(l=20, r=20, t=50, b=20),
-                )
-                st.plotly_chart(fig_kehadiran, use_container_width=True)
-
+            
             excel_bytes_kelas = convert_df_to_excel(
                 df_kehadiran_kelas, sheet_name="Kehadiran per Kelas"
             )
