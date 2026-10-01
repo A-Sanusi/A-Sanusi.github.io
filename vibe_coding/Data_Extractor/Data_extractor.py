@@ -301,7 +301,7 @@ def calculate_kehadiran_per_kelas(df_total: pd.DataFrame) -> pd.DataFrame:
 
     # 3. Calculate grand totals across all classes
     grand_total = df_summary[target_cols].sum().to_frame().T
-    grand_total[kelas_col] = "TOTAL OVERALL"
+    grand_total[kelas_col] = "TOTAL"
 
     # 4. Combine class totals with grand total
     result_df = pd.concat([df_summary, grand_total], ignore_index=True)
