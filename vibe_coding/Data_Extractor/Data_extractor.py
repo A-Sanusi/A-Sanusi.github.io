@@ -158,7 +158,6 @@ def process_kehadiran(
       for c in [
           "NAMA SISWA",
           "KELAS (DI PRIORITY)",
-          "KELAS",
       ]
       if c in df_siswa.columns
   ]
