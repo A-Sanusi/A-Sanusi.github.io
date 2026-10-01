@@ -713,15 +713,6 @@ with tab_kehadiran:
         df_kehadiran_kelas = calculate_kehadiran_per_kelas(df_total_kehadiran)
 
         if not df_kehadiran_kelas.empty:
-            # Display overall percentage total across all classes
-            total_row = df_kehadiran_kelas[df_kehadiran_kelas["KELAS"] == "TOTAL SEMUA KELAS"]
-            if not total_row.empty:
-                overall_pct = total_row["Persentase Kehadiran (%)"].values[0]
-                st.metric(
-                    label="Total Persentase Kehadiran Semua Kelas",
-                    value=f"{overall_pct:.2f}%",
-                )
-
             st.dataframe(df_kehadiran_kelas, use_container_width=True)
 
             excel_bytes_kelas = convert_df_to_excel(
