@@ -164,6 +164,7 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
 
     # Define target attendance headers to pull
     target_cols = [
+        "KELAS (DI PRIORITY)"
         "KBM HADIR",
         "BINSIK HADIR",
         "TO HADIR",
@@ -219,6 +220,11 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
     df_hasil = df_hasil.drop(columns=["key_match"]).dropna(
         subset=[selected_siswa_cols[0]]
     )
+    rename_map = {
+    "KELAS (DI PRIORITY)": "KELAS",
+    }
+    
+    df_hasil = df_sub.rename(columns=rename_map)
     df_hasil = df_hasil.fillna("0").astype(str)
     df_hasil.index = range(1, len(df_hasil) + 1)
     df_hasil.index.name = "No"
