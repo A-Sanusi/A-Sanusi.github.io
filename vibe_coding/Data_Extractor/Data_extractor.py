@@ -509,7 +509,6 @@ with tab_to_tka:
             fig.update_layout(
                 xaxis_title="Kelas",
                 yaxis_title="Nilai Rata-Rata",
-                legend_title="Kategori",
                 hovermode="x unified",
                 margin=dict(l=20, r=20, t=50, b=20),
             )
