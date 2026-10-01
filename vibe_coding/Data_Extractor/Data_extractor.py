@@ -449,7 +449,7 @@ with tab_to_tka:
             df_calc["Rata-Rata Overall"] = df_calc[score_cols].mean(axis=1)
 
             df_avg_kelas = (
-                df_calc.groupby("KELAS (DI PRIORITY)")[score_cols + ["Rata-Rata Overall"]]
+                df_calc.groupby("KELAS (DI PRIORITY)")[score_cols]
                 .mean()
                 .round(2)
                 .reset_index()
