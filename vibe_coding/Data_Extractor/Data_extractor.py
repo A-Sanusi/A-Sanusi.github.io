@@ -479,8 +479,10 @@ with tab_to_tka:
 
             df_calc["Rata-Rata Overall"] = df_calc[score_cols].mean(axis=1)
 
+            cols_to_avg = score_cols + ["Rata-Rata Overall"]
+
             df_avg_kelas = (
-                df_calc.groupby("KELAS (DI PRIORITY)")[score_cols]
+                df_calc.groupby("KELAS (DI PRIORITY)")[cols_to_avg]
                 .mean()
                 .round(2)
                 .reset_index()
@@ -489,9 +491,7 @@ with tab_to_tka:
             df_avg_kelas.index.name = "No"
 
             st.dataframe(df_avg_kelas, use_container_width=True)
-            chart_data = df_avg_kelas.set_index("KELAS (DI PRIORITY)")[
-                score_cols + ["Rata-Rata Overall"]
-            ]
+            chart_data = df_avg_kelas.set_index("KELAS (DI PRIORITY)")[cols_to_avg]
 
             st.bar_chart(chart_data)
             excel_bytes_avg = convert_df_to_excel(
