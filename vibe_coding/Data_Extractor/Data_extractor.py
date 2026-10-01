@@ -71,7 +71,7 @@ def process_to_tka(
     ]
 
     col_siswa_akun = next(
-        (c for c in ["NAMA SISWA", "NAMA AKUN TO"] if c in df_siswa.columns),
+        (c for c in ["NAMA SISWA", "NAMA AKUN TO", "KELAS (DI PRIORITY)"] if c in df_siswa.columns),
         df_siswa.columns[1] if len(df_siswa.columns) > 1 else df_siswa.columns[0],
     )
 
@@ -93,7 +93,7 @@ def process_to_tka(
             col_to_akun = next(
                 (
                     c
-                    for c in ["NAMA SISWA", "NAMA AKUN TO"]
+                    for c in ["NAMA SISWA", "NAMA AKUN TO", "KELAS (DI PRIORITY)"]
                     if c in df_nilai_raw.columns
                 ),
                 df_nilai_raw.columns[1]
@@ -140,7 +140,6 @@ def process_to_tka(
     df_hasil.index = range(1, len(df_hasil) + 1)
     df_hasil.index.name = "No"
     return df_hasil
-
 
 def process_kehadiran(
     uploaded_file, sheet_siswa: str, target_sheets: list[str]
