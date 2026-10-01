@@ -40,7 +40,7 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
     df_siswa_raw = pd.read_excel(uploaded_siswa, sheet_name=sheet_siswa, header=0)
     df_siswa = df_siswa_raw.dropna(how="all").copy()
     df_siswa.columns = df_siswa.columns.astype(str).str.strip()
-    selected_siswa_cols = ["NAMA SISWA", "NAMA AKUN TO"]
+    selected_siswa_cols = ["NAMA SISWA", "NAMA AKUN TO", "KELAS (DI PRIORITY)"]
 
     # Detect student account column dynamically
     col_siswa_akun = (
