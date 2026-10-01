@@ -413,10 +413,12 @@ with tab_to_tka:
         with col_s3:
             s3 = st.selectbox("Subtes 3:", excel_to.sheet_names, key="s3")
 
+        # 1. Process Student Scores
         df_hasil = process_to_tka(
             uploaded_siswa, uploaded_to, selected_sheet_siswa, [s1, s2, s3]
         )
 
+        # 2. Display Individual Student Results
         st.subheader("Tabel Nilai Siswa")
         st.dataframe(df_hasil, use_container_width=True)
 
@@ -429,6 +431,41 @@ with tab_to_tka:
             file_name="Hasil_Nilai_Try_Out.xlsx",
             key="download_to",
         )
+
+        st.divider()
+
+        # 3. Calculate & Display Average per KELAS
+        st.subheader("Rata-Rata Nilai per Kelas")
+
+        score_cols = [col for col in df_hasil.columns if col.startswith("Nilai ")]
+
+        if score_cols:
+            df_calc = df_hasil.copy()
+
+            # Safely parse numeric score values
+            for col in score_cols:
+                df_calc[col] = pd.to_numeric(df_calc[col], errors="coerce")
+
+            df_calc["Rata-Rata Overall"] = df_calc[score_cols].mean(axis=1)
+
+            df_avg_kelas = (
+                df_calc.groupby("KELAS (DI PRIORITY)")[score_cols + ["Rata-Rata Overall"]]
+                .mean()
+                .round(2)
+                .reset_index()
+            )
+
+            st.dataframe(df_avg_kelas, use_container_width=True)
+
+            excel_bytes_avg = convert_df_to_excel(
+                df_avg_kelas, sheet_name="Rata-Rata per Kelas"
+            )
+            st.download_button(
+                label="Download Nilai Rata-Rata Kelas",
+                data=excel_bytes_avg,
+                file_name="Rata_Rata_Nilai_Per_Kelas.xlsx",
+                key="download_avg_kelas",
+            )
 
 with tab_to_skd:
     st.header("Ekstrak Nilai SKD")
