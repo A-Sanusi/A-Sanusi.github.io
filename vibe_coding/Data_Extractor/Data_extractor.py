@@ -274,80 +274,40 @@ def calculate_total_kehadiran(df_monthly: pd.DataFrame) -> pd.DataFrame:
 
 
 def calculate_kehadiran_per_kelas(df_total: pd.DataFrame) -> pd.DataFrame:
-    """Calculates attendance percentage grouped by class, including an overall total summary."""
+    """Calculates total attendance amounts grouped by class, including an overall total summary."""
     df_calc = df_total.copy()
 
-    hadir_cols = [
-        c for c in df_calc.columns if c.startswith("TOTAL ") and "HADIR" in c
-    ]
-    izin_cols = [
-        c for c in df_calc.columns if c.startswith("TOTAL ") and "IZIN" in c
-    ]
-    alpa_cols = [
-        c for c in df_calc.columns if c.startswith("TOTAL ") and "ALPA" in c
-    ]
+    categories = ["KBM", "BINSIK", "TO"]
+    statuses = ["HADIR", "IZIN", "ALPA"]
+    df_cols = set(df_calc.columns)
 
-    for col in hadir_cols + izin_cols + alpa_cols:
-        df_calc[col] = pd.to_numeric(df_calc[col], errors="coerce").fillna(0)
-
-    df_calc["_TOTAL_HADIR"] = df_calc[hadir_cols].sum(axis=1) if hadir_cols else 0
-    df_calc["_TOTAL_IZIN"] = df_calc[izin_cols].sum(axis=1) if izin_cols else 0
-    df_calc["_TOTAL_ALPA"] = df_calc[alpa_cols].sum(axis=1) if alpa_cols else 0
-    df_calc["_TOTAL_PERTEMUAN"] = (
-        df_calc["_TOTAL_HADIR"]
-        + df_calc["_TOTAL_IZIN"]
-        + df_calc["_TOTAL_ALPA"]
-    )
+    # 1. Identify valid columns and ensure they are numeric
+    target_cols = []
+    for cat in categories:
+        for status in statuses:
+            header = f"TOTAL {cat} {status}"
+            if header in df_cols:
+                target_cols.append(header)
+                df_calc[header] = pd.to_numeric(df_calc[header], errors="coerce").fillna(0)
 
     kelas_col = "KELAS" if "KELAS" in df_calc.columns else None
 
-    if not kelas_col:
+    if not kelas_col or not target_cols:
         return pd.DataFrame()
 
-    df_kelas = (
-        df_calc.groupby(kelas_col)
-        .agg(
-            Jumlah_Siswa=(
-                ("NAMA SISWA", "count")
-                if "NAMA SISWA" in df_calc.columns
-                else (kelas_col, "count")
-            ),
-            Total_Hadir=("_TOTAL_HADIR", "sum"),
-            Total_Izin=("_TOTAL_IZIN", "sum"),
-            Total_Alpa=("_TOTAL_ALPA", "sum"),
-            Total_Pertemuan=("_TOTAL_PERTEMUAN", "sum"),
-        )
-        .reset_index()
-    )
+    # 2. Group by KELAS and calculate amounts
+    df_summary = df_calc.groupby(kelas_col, as_index=False)[target_cols].sum()
 
-    df_kelas["Persentase Kehadiran (%)"] = (
-        (df_kelas["Total_Hadir"] / df_kelas["Total_Pertemuan"]) * 100
-    ).round(2).fillna(0)
+    # 3. Calculate grand totals across all classes
+    grand_total = df_summary[target_cols].sum().to_frame().T
 
-    # Calculate overall total across all classes
-    tot_siswa = df_kelas["Jumlah_Siswa"].sum()
-    tot_hadir = df_kelas["Total_Hadir"].sum()
-    tot_izin = df_kelas["Total_Izin"].sum()
-    tot_alpa = df_kelas["Total_Alpa"].sum()
-    tot_pertemuan = df_kelas["Total_Pertemuan"].sum()
-    tot_persen = round((tot_hadir / tot_pertemuan * 100), 2) if tot_pertemuan > 0 else 0.0
+    # 4. Combine class totals with overall grand total
+    result_df = pd.concat([df_summary, grand_total])
+    result_df.index = range(1, len(result_df) + 1)
+    result_df.index.name = "No"
+    result_df = result_df.astype(object).fillna("-")
 
-    total_row = pd.DataFrame([{
-        kelas_col: "TOTAL SEMUA KELAS",
-        "Jumlah_Siswa": tot_siswa,
-        "Total_Hadir": tot_hadir,
-        "Total_Izin": tot_izin,
-        "Total_Alpa": tot_alpa,
-        "Total_Pertemuan": tot_pertemuan,
-        "Persentase Kehadiran (%)": tot_persen,
-    }])
-
-    df_kelas = pd.concat([df_kelas, total_row], ignore_index=True)
-
-    df_kelas.index = range(1, len(df_kelas) + 1)
-    df_kelas.index.name = "No"
-
-    return df_kelas
+    return result_df
 
 def process_binsik(
     uploaded_siswa_3,
