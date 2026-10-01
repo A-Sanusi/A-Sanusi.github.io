@@ -501,6 +501,7 @@ with tab_to_tka:
                 labels={
                     "KELAS (DI PRIORITY)": "Kelas",
                     "value": "Nilai Rata-Rata",
+                    "variable": "Nilai TO",
                 },
                 text_auto=".2f",
             )
