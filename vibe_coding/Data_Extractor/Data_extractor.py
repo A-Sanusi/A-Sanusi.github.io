@@ -491,24 +491,19 @@ with tab_to_tka:
 
             st.dataframe(df_avg_kelas, use_container_width=True)
 
-# --- PLOTLY EXPRESS LINE CHART ---
-            fig = px.line(
+            # --- PLOTLY EXPRESS BAR CHART ---
+            fig = px.bar(
                 df_avg_kelas,
                 x="KELAS (DI PRIORITY)",
                 y=cols_to_avg,
-                markers=True,
+                barmode="group",
                 title="Rata-Rata Nilai Try Out per Kelas",
                 labels={
                     "KELAS (DI PRIORITY)": "Kelas",
                     "value": "Nilai Rata-Rata",
                     "variable": "Subtes / Kategori",
                 },
-            )
-
-            # Display numeric labels above markers
-            fig.update_traces(
-                texttemplate="%{y:.2f}",
-                textposition="top center"
+                text_auto=".2f",
             )
 
             fig.update_layout(
