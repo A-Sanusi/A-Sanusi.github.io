@@ -6,11 +6,13 @@ st.set_page_config(page_title="Ekstrak Data", layout="wide")
 st.link_button("Menu", "https://a-sanusi.github.io/vibe_coding/vibe_coding.html")
 st.title("Ekstrak Data")
 
+
 def convert_df_to_excel(df, sheet_name="Sheet1"):
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=True, sheet_name=sheet_name)
     return output.getvalue()
+
 
 def process_database(uploaded_file):
     df_siswa_raw = pd.read_excel(uploaded_file, sheet_name="DATA BASE")
@@ -34,10 +36,13 @@ def process_database(uploaded_file):
     df_merged = df_merged.astype(object).fillna("-")
     return df_merged
 
+
 def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
     """Processes and merges Try Out scores with student data."""
     # 1. Load student list
-    df_siswa_raw = pd.read_excel(uploaded_siswa, sheet_name=sheet_siswa, header=0)
+    df_siswa_raw = pd.read_excel(
+        uploaded_siswa, sheet_name=sheet_siswa, header=0
+    )
     df_siswa = df_siswa_raw.dropna(how="all").copy()
     df_siswa.columns = df_siswa.columns.astype(str).str.strip()
     selected_siswa_cols = ["NAMA SISWA", "NAMA AKUN TO", "KELAS (DI PRIORITY)"]
@@ -46,7 +51,11 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
     col_siswa_akun = (
         "NAMA AKUN TO"
         if "NAMA AKUN TO" in df_siswa.columns
-        else ("NAMA AKUN" if "NAMA AKUN" in df_siswa.columns else df_siswa.columns[1])
+        else (
+            "NAMA AKUN"
+            if "NAMA AKUN" in df_siswa.columns
+            else df_siswa.columns[1]
+        )
     )
 
     df_siswa["key_match"] = (
@@ -70,7 +79,11 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
 
             # Detect account/name column in TO sheet ("NAMA SISWA", "NAMA AKUN", etc.)
             col_to_akun = next(
-                (c for c in ["NAMA SISWA", "NAMA AKUN", "NAMA AKUN TO"] if c in df_nilai_raw.columns),
+                (
+                    c
+                    for c in ["NAMA SISWA", "NAMA AKUN", "NAMA AKUN TO"]
+                    if c in df_nilai_raw.columns
+                ),
                 df_nilai_raw.columns[1],
             )
 
@@ -82,10 +95,14 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
             )
 
             # Filter present score columns
-            available_score_cols = [c for c in selected_to_cols if c in df_nilai_raw.columns]
-            df_sub = df_nilai_raw[
-                ["key_match"] + available_score_cols
-            ].drop_duplicates(subset=["key_match"]).copy()
+            available_score_cols = [
+                c for c in selected_to_cols if c in df_nilai_raw.columns
+            ]
+            df_sub = (
+                df_nilai_raw[["key_match"] + available_score_cols]
+                .drop_duplicates(subset=["key_match"])
+                .copy()
+            )
 
             if "TOTAL BENAR" in df_sub.columns:
                 df_sub["TOTAL BENAR"] = (
@@ -106,11 +123,14 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
             df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
 
     # 3. Clean final result DataFrame
-    df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=["NAMA SISWA"])
+    df_hasil = df_hasil.drop(columns=["key_match"]).dropna(
+        subset=["NAMA SISWA"]
+    )
     df_hasil = df_hasil.astype(object).fillna("-")
     df_hasil.index = range(1, len(df_hasil) + 1)
     df_hasil.index.name = "No"
     return df_hasil
+
 
 def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
     # 1. Load base student list
@@ -151,7 +171,7 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
         "TO IZIN",
         "KBM ALPA",
         "BINSIK ALPA",
-        "TO ALPA"
+        "TO ALPA",
     ]
 
     excel_file = pd.ExcelFile(uploaded_file)
@@ -162,7 +182,9 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
             df_sheet_raw = pd.read_excel(
                 uploaded_file, sheet_name=sheet, header=0
             ).dropna(how="all")
-            df_sheet_raw.columns = df_sheet_raw.columns.astype(str).str.strip()
+            df_sheet_raw.columns = (
+                df_sheet_raw.columns.astype(str).str.strip()
+            )
 
             col_sheet_akun = next(
                 (
@@ -199,8 +221,9 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
     df_hasil = df_hasil.fillna("0").astype(str)
     df_hasil.index = range(1, len(df_hasil) + 1)
     df_hasil.index.name = "No"
-    
+
     return df_hasil
+
 
 def calculate_total_kehadiran(df_monthly):
     """Calculates total attendance per student into a separate DataFrame."""
@@ -220,7 +243,7 @@ def calculate_total_kehadiran(df_monthly):
         "TO IZIN",
         "KBM ALPA",
         "BINSIK ALPA",
-        "TO ALPA"
+        "TO ALPA",
     ]
 
     for metric in target_metrics:
@@ -241,116 +264,122 @@ def calculate_total_kehadiran(df_monthly):
     df_total.index.name = "No"
     return df_total
 
+
 def process_binsik(
     uploaded_siswa_3, uploaded_binsik, sheet_siswa, selected_sheet_binsik
 ):
-  df_siswa_raw = pd.read_excel(uploaded_siswa_3, sheet_name=sheet_siswa)
-  df_siswa = df_siswa_raw.dropna(how="all").copy()
-  df_siswa.columns = df_siswa.columns.astype(str).str.strip()
-  selected_siswa_cols = ["NAMA SISWA"]
+    df_siswa_raw = pd.read_excel(uploaded_siswa_3, sheet_name=sheet_siswa)
+    df_siswa = df_siswa_raw.dropna(how="all").copy()
+    df_siswa.columns = df_siswa.columns.astype(str).str.strip()
+    selected_siswa_cols = ["NAMA SISWA"]
 
-  col_siswa_akun = (
-      "NAMA AKUN BINSIK"
-      if "NAMA AKUN BINSIK" in df_siswa.columns
-      else (
-          "NAMA AKUN" if "NAMA AKUN" in df_siswa.columns else df_siswa.columns[1]
-      )
-  )
+    col_siswa_akun = (
+        "NAMA AKUN BINSIK"
+        if "NAMA AKUN BINSIK" in df_siswa.columns
+        else (
+            "NAMA AKUN"
+            if "NAMA AKUN" in df_siswa.columns
+            else df_siswa.columns[1]
+        )
+    )
 
-  df_siswa["key_match"] = (
-      df_siswa[col_siswa_akun].astype(str).str.strip().str.lower()
-  )
+    df_siswa["key_match"] = (
+        df_siswa[col_siswa_akun].astype(str).str.strip().str.lower()
+    )
 
-  df_hasil = df_siswa[selected_siswa_cols + ["key_match"]].copy()
+    df_hasil = df_siswa[selected_siswa_cols + ["key_match"]].copy()
 
-  selected_binsik_cols = [
-      "JUMLAH LARI",
-      "JUMLAH SHUTTLE RUN",
-      "JUMLAH PUSH UP",
-      "JUMLAH SIT UP",
-      "JUMLAH PULL UP",
-      "JUMLAH CHINNING UP",
-      "NILAI LARI",
-      "NILAI SHUTTLE RUN",
-      "NILAI PUSH UP",
-      "NILAI SIT UP",
-      "NILAI PULL UP",
-      "NILAI CHINNING UP",
-      "T-SCORE",
-      "KELULUSAN",
-  ]
-
-  df_nilai_raw = pd.read_excel(
-      uploaded_binsik, sheet_name=selected_sheet_binsik, header=1
-  ).dropna(how="all")
-
-  df_nilai_raw.columns = df_nilai_raw.columns.astype(str).str.strip()
-
-  col_to_akun = next(
-      (c for c in ["NAMA SISWA"] if c in df_nilai_raw.columns),
-      df_nilai_raw.columns[1],
-  )
-
-  df_nilai_raw["key_match"] = (
-      df_nilai_raw[col_to_akun].astype(str).str.strip().str.lower()
-  )
-
-  available_score_cols = [
-      c for c in selected_binsik_cols if c in df_nilai_raw.columns
-  ]
-  df_sub = (
-      df_nilai_raw[["key_match"] + available_score_cols]
-      .drop_duplicates(subset=["key_match"])
-      .copy()
-  )
-
-  rename_map = {
-      "JUMLAH LARI": f"Jumlah Lari {selected_sheet_binsik}",
-      "JUMLAH SHUTTLE RUN": f"Shuttle Run {selected_sheet_binsik}",
-      "JUMLAH PUSH UP": f"Push Up {selected_sheet_binsik}",
-      "JUMLAH SIT UP": f"Jumlah Sit Up {selected_sheet_binsik}",
-      "JUMLAH PULL UP": f"Jumlah Pull Up {selected_sheet_binsik}",
-      "JUMLAH CHINNING UP": f"Jumlah Chinning Up {selected_sheet_binsik}",
-      "NILAI LARI": f"Nilai Lari {selected_sheet_binsik}",
-      "NILAI SHUTTLE RUN": f"Nilai Shuttle Run {selected_sheet_binsik}",
-      "NILAI PUSH UP": f"Nilai Push Up {selected_sheet_binsik}",
-      "NILAI SIT UP": f"Nilai Sit Up {selected_sheet_binsik}",
-      "NILAI PULL UP": f"Nilai Pull Up {selected_sheet_binsik}",
-      "NILAI CHINNING UP": f"Nilai Chinning Up {selected_sheet_binsik}",
-      "T-SCORE": f"Total Skor {selected_sheet_binsik}",
-      "KELULUSAN": f"Kelulusan {selected_sheet_binsik}",
-  }
-  df_sub = df_sub.rename(columns=rename_map)
-
-  # --- ROUNDING LOGIC ---
-  score_cols = [
-      col
-      for col in df_sub.columns
-      if col.startswith("Total Skor")
-  ]
-  for col in score_cols:
-    df_sub[col] = pd.to_numeric(df_sub[col], errors="coerce").round(2)
-
-  # Merge per subtest sheet
-  df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
-
-  # Final cleanup
-  df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=["NAMA SISWA"])
-  df_hasil = df_hasil.astype(object).fillna("-")
-  df_hasil.index = range(1, len(df_hasil) + 1)
-  df_hasil.index.name = "No"
-  
-  return df_hasil
-
-tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs(
-    [
-        "🔴 Ekstrak Database",
-        "🟣 Ekstrak Nilai TO TKA",
-        "🔴 Ekstrak Nilai TO SKD (coming soon)",
-        "🟣 Ekstrak Nilai TO UTBK (coming soon)",
-        "🔴 Ekstrak Kehadiran",
-        "🟣 Ekstrak Nilai Binsik",
+    selected_binsik_cols = [
+        "JUMLAH LARI",
+        "JUMLAH SHUTTLE RUN",
+        "JUMLAH PUSH UP",
+        "JUMLAH SIT UP",
+        "JUMLAH PULL UP",
+        "JUMLAH CHINNING UP",
+        "NILAI LARI",
+        "NILAI SHUTTLE RUN",
+        "NILAI PUSH UP",
+        "NILAI SIT UP",
+        "NILAI PULL UP",
+        "NILAI CHINNING UP",
+        "T-SCORE",
+        "KELULUSAN",
     ]
+
+    df_nilai_raw = pd.read_excel(
+        uploaded_binsik, sheet_name=selected_sheet_binsik, header=1
+    ).dropna(how="all")
+
+    df_nilai_raw.columns = df_nilai_raw.columns.astype(str).str.strip()
+
+    col_to_akun = next(
+        (c for c in ["NAMA SISWA"] if c in df_nilai_raw.columns),
+        df_nilai_raw.columns[1],
+    )
+
+    df_nilai_raw["key_match"] = (
+        df_nilai_raw[col_to_akun].astype(str).str.strip().str.lower()
+    )
+
+    available_score_cols = [
+        c for c in selected_binsik_cols if c in df_nilai_raw.columns
+    ]
+    df_sub = (
+        df_nilai_raw[["key_match"] + available_score_cols]
+        .drop_duplicates(subset=["key_match"])
+        .copy()
+    )
+
+    rename_map = {
+        "JUMLAH LARI": f"Jumlah Lari {selected_sheet_binsik}",
+        "JUMLAH SHUTTLE RUN": f"Shuttle Run {selected_sheet_binsik}",
+        "JUMLAH PUSH UP": f"Push Up {selected_sheet_binsik}",
+        "JUMLAH SIT UP": f"Jumlah Sit Up {selected_sheet_binsik}",
+        "JUMLAH PULL UP": f"Jumlah Pull Up {selected_sheet_binsik}",
+        "JUMLAH CHINNING UP": f"Jumlah Chinning Up {selected_sheet_binsik}",
+        "NILAI LARI": f"Nilai Lari {selected_sheet_binsik}",
+        "NILAI SHUTTLE RUN": f"Nilai Shuttle Run {selected_sheet_binsik}",
+        "NILAI PUSH UP": f"Nilai Push Up {selected_sheet_binsik}",
+        "NILAI SIT UP": f"Nilai Sit Up {selected_sheet_binsik}",
+        "NILAI PULL UP": f"Nilai Pull Up {selected_sheet_binsik}",
+        "NILAI CHINNING UP": f"Nilai Chinning Up {selected_sheet_binsik}",
+        "T-SCORE": f"Total Skor {selected_sheet_binsik}",
+        "KELULUSAN": f"Kelulusan {selected_sheet_binsik}",
+    }
+    df_sub = df_sub.rename(columns=rename_map)
+
+    # --- ROUNDING LOGIC ---
+    score_cols = [
+        col for col in df_sub.columns if col.startswith("Total Skor")
+    ]
+    for col in score_cols:
+        df_sub[col] = pd.to_numeric(df_sub[col], errors="coerce").round(2)
+
+    # Merge per subtest sheet
+    df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
+
+    # Final cleanup
+    df_hasil = df_hasil.drop(columns=["key_match"]).dropna(
+        subset=["NAMA SISWA"]
+    )
+    df_hasil = df_hasil.astype(object).fillna("-")
+    df_hasil.index = range(1, len(df_hasil) + 1)
+    df_hasil.index.name = "No"
+
+    return df_hasil
+
+
+tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = (
+    st.tabs(
+        [
+            "🔴 Ekstrak Database",
+            "🟣 Ekstrak Nilai TO TKA",
+            "🔴 Ekstrak Nilai TO SKD (coming soon)",
+            "🟣 Ekstrak Nilai TO UTBK (coming soon)",
+            "🔴 Ekstrak Kehadiran",
+            "🟣 Ekstrak Nilai Binsik",
+        ]
+    )
 )
 
 with tab_db:
@@ -437,7 +466,9 @@ with tab_to_tka:
         # 3. Calculate & Display Average per KELAS
         st.subheader("Rata-Rata Nilai per Kelas")
 
-        score_cols = [col for col in df_hasil.columns if col.startswith("Nilai ")]
+        score_cols = [
+            col for col in df_hasil.columns if col.startswith("Nilai ")
+        ]
 
         if score_cols:
             df_calc = df_hasil.copy()
@@ -454,15 +485,15 @@ with tab_to_tka:
                 .round(2)
                 .reset_index()
             )
-            df_avg_kelas.index = range(1, len(df_merged) + 1)
+            df_avg_kelas.index = range(1, len(df_avg_kelas) + 1)
             df_avg_kelas.index.name = "No"
-            
+
             st.dataframe(df_avg_kelas, use_container_width=True)
             chart_data = df_avg_kelas.set_index("KELAS (DI PRIORITY)")[
                 score_cols + ["Rata-Rata Overall"]
             ]
 
-st.bar_chart(chart_data)
+            st.bar_chart(chart_data)
             excel_bytes_avg = convert_df_to_excel(
                 df_avg_kelas, sheet_name="Rata-Rata per Kelas"
             )
@@ -588,30 +619,31 @@ with tab_binsik:
         uploaded_binsik = st.file_uploader(
             "Upload File Binsik Siswa",
             type=["xlsx", "xls", "xlsm"],
-            key="uploader_binsik"
+            key="uploader_binsik",
         )
 
     if uploaded_siswa_3 is None or uploaded_binsik is None:
         st.info("Silakan upload kedua file Excel untuk melanjutkan.")
     else:
         excel_siswa_3 = pd.ExcelFile(uploaded_siswa_3)
-        
+
         selected_sheet_siswa_3 = st.selectbox(
             "Pilih Sheet Data Siswa Utama:",
             excel_siswa_3.sheet_names,
-            key="sheet_siswa_select_3"
+            key="sheet_siswa_select_3",
         )
 
         excel_binsik = pd.ExcelFile(uploaded_binsik)
 
         selected_sheet_binsik = st.selectbox(
-            "Pilih Data Binsik:",
-            excel_binsik.sheet_names,
-            key="sheet_binsik"
+            "Pilih Data Binsik:", excel_binsik.sheet_names, key="sheet_binsik"
         )
 
         df_hasil_binsik = process_binsik(
-            uploaded_siswa_3, uploaded_binsik, selected_sheet_siswa_3, selected_sheet_binsik
+            uploaded_siswa_3,
+            uploaded_binsik,
+            selected_sheet_siswa_3,
+            selected_sheet_binsik,
         )
 
         st.subheader("Tabel Nilai Binsik Siswa")
