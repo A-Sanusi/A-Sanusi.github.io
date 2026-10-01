@@ -1,6 +1,7 @@
 import io
 import pandas as pd
 import streamlit as st
+import plotly.express as px
 
 st.set_page_config(page_title="Ekstrak Data", layout="wide")
 st.link_button("Menu", "https://a-sanusi.github.io/vibe_coding/vibe_coding.html")
@@ -491,9 +492,32 @@ with tab_to_tka:
             df_avg_kelas.index.name = "No"
 
             st.dataframe(df_avg_kelas, use_container_width=True)
-            chart_data = df_avg_kelas.set_index("KELAS (DI PRIORITY)")[cols_to_avg]
 
-            st.bar_chart(chart_data)
+            # --- PLOTLY EXPRESS CHART ---
+            fig = px.bar(
+                df_avg_kelas,
+                x="KELAS (DI PRIORITY)",
+                y=cols_to_avg,
+                barmode="group",
+                title="Rata-Rata Nilai Try Out per Kelas",
+                labels={
+                    "KELAS (DI PRIORITY)": "Kelas",
+                    "value": "Nilai Rata-Rata",
+                    "variable": "Subtes / Kategori",
+                },
+                text_auto=".2f",
+            )
+
+            fig.update_layout(
+                xaxis_title="Kelas",
+                yaxis_title="Nilai Rata-Rata",
+                legend_title="Kategori",
+                hovermode="x unified",
+                margin=dict(l=20, r=20, t=50, b=20),
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
             excel_bytes_avg = convert_df_to_excel(
                 df_avg_kelas, sheet_name="Rata-Rata per Kelas"
             )
