@@ -58,7 +58,7 @@ def process_to_tka(
 
     df_siswa_raw = excel_siswa.parse(sheet_name=sheet_siswa, header=0)
     df_siswa = df_siswa_raw.dropna(how="all").copy()
-    df_siswa.columns = df_siswa.columns.astype(str).str.strip()
+    df_siswa.columns = df_siswa.columns.astype(str).str.strip().str.lower()
 
     selected_siswa_cols = [
         c
