@@ -141,6 +141,7 @@ def process_to_tka(
     df_hasil.index.name = "No"
     return df_hasil
 
+
 def process_kehadiran(
     uploaded_file, sheet_siswa: str, target_sheets: list[str]
 ) -> pd.DataFrame:
@@ -173,7 +174,7 @@ def process_kehadiran(
     )
     df_hasil = df_siswa[selected_siswa_cols + ["key_match"]].copy()
 
-    # RENAME HEADER FOR KEHADIRAN HERE
+    # Rename class header for consistency
     df_hasil = df_hasil.rename(columns={"KELAS (DI PRIORITY)": "KELAS"})
 
     # Target attendance headers
@@ -274,7 +275,7 @@ def calculate_total_kehadiran(df_monthly: pd.DataFrame) -> pd.DataFrame:
 
 
 def calculate_kehadiran_per_kelas(df_total: pd.DataFrame) -> pd.DataFrame:
-    """Calculates total attendance amounts grouped by class, including an overall total summary."""
+    """Calculates total attendance amounts and % HADIR grouped by class, including an overall total summary."""
     df_calc = df_total.copy()
 
     categories = ["KBM", "BINSIK", "TO"]
@@ -295,19 +296,41 @@ def calculate_kehadiran_per_kelas(df_total: pd.DataFrame) -> pd.DataFrame:
     if not kelas_col or not target_cols:
         return pd.DataFrame()
 
-    # 2. Group by KELAS and calculate amounts
+    # 2. Group by KELAS and calculate sum of amounts
     df_summary = df_calc.groupby(kelas_col, as_index=False)[target_cols].sum()
 
     # 3. Calculate grand totals across all classes
     grand_total = df_summary[target_cols].sum().to_frame().T
+    grand_total[kelas_col] = "TOTAL OVERALL"
 
-    # 4. Combine class totals with overall grand total
-    result_df = pd.concat([df_summary, grand_total])
+    # 4. Combine class totals with grand total
+    result_df = pd.concat([df_summary, grand_total], ignore_index=True)
+
+    # 5. Add Percentage HADIR columns (% HADIR KBM, % HADIR BINSIK, % HADIR TO)
+    for cat in categories:
+        hadir_col = f"TOTAL {cat} HADIR"
+        izin_col = f"TOTAL {cat} IZIN"
+        alpa_col = f"TOTAL {cat} ALPA"
+
+        if hadir_col in result_df.columns:
+            total_cat = 0
+            for col in [hadir_col, izin_col, alpa_col]:
+                if col in result_df.columns:
+                    total_cat += result_df[col]
+
+            pct_col = f"% HADIR {cat}"
+            result_df[pct_col] = (
+                (result_df[hadir_col] / total_cat * 100)
+                .fillna(0)
+                .round(2)
+                .astype(str) + "%"
+            )
+
     result_df.index = range(1, len(result_df) + 1)
     result_df.index.name = "No"
-    result_df = result_df.astype(object).fillna("-")
 
     return result_df
+
 
 def process_binsik(
     uploaded_siswa_3,
@@ -664,22 +687,52 @@ with tab_kehadiran:
             key="download_kehadiran_total",
         )
 
-        # --- PERSENTASE KEHADIRAN PER KELAS ---
+        # --- REKAP KEHADIRAN PER KELAS ---
         st.divider()
-        st.subheader("Persentase Kehadiran per Kelas")
+        st.subheader("Rekap Kehadiran per Kelas")
 
         df_kehadiran_kelas = calculate_kehadiran_per_kelas(df_total_kehadiran)
 
         if not df_kehadiran_kelas.empty:
             st.dataframe(df_kehadiran_kelas, use_container_width=True)
 
+            # Interactive Plotly Bar Chart for Class Totals
+            hadir_cols = [
+                c for c in df_kehadiran_kelas.columns if c.endswith("HADIR") and c.startswith("TOTAL")
+            ]
+            if hadir_cols:
+                # Exclude the 'TOTAL OVERALL' row for the chart comparison
+                df_chart = df_kehadiran_kelas[
+                    df_kehadiran_kelas["KELAS"] != "TOTAL OVERALL"
+                ].copy()
+
+                fig_kehadiran = px.bar(
+                    df_chart,
+                    x="KELAS",
+                    y=hadir_cols,
+                    barmode="group",
+                    title="Total Kehadiran Siswa (HADIR) per Kelas",
+                    labels={
+                        "KELAS": "Kelas",
+                        "value": "Jumlah Kehadiran",
+                        "variable": "Kategori",
+                    },
+                    text_auto=True,
+                )
+                fig_kehadiran.update_layout(
+                    xaxis_title="Kelas",
+                    yaxis_title="Jumlah Kehadiran",
+                    margin=dict(l=20, r=20, t=50, b=20),
+                )
+                st.plotly_chart(fig_kehadiran, use_container_width=True)
+
             excel_bytes_kelas = convert_df_to_excel(
                 df_kehadiran_kelas, sheet_name="Kehadiran per Kelas"
             )
             st.download_button(
-                label="Download Persentase Kehadiran Kelas",
+                label="Download Rekap Kehadiran Kelas",
                 data=excel_bytes_kelas,
-                file_name="Persentase_Kehadiran_Per_Kelas.xlsx",
+                file_name="Rekap_Kehadiran_Per_Kelas.xlsx",
                 key="download_kehadiran_kelas",
             )
 
