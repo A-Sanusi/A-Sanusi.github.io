@@ -454,9 +454,15 @@ with tab_to_tka:
                 .round(2)
                 .reset_index()
             )
-
+            df_avg_kelas.index = range(1, len(df_merged) + 1)
+            df_avg_kelas.index.name = "No"
+            
             st.dataframe(df_avg_kelas, use_container_width=True)
+            chart_data = df_avg_kelas.set_index("KELAS (DI PRIORITY)")[
+                score_cols + ["Rata-Rata Overall"]
+            ]
 
+st.bar_chart(chart_data)
             excel_bytes_avg = convert_df_to_excel(
                 df_avg_kelas, sheet_name="Rata-Rata per Kelas"
             )
