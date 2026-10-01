@@ -349,7 +349,6 @@ def calculate_kehadiran_per_kelas(df_total: pd.DataFrame) -> pd.DataFrame:
 
     return df_kelas
 
-
 def process_binsik(
     uploaded_siswa_3,
     uploaded_binsik,
