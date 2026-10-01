@@ -109,7 +109,7 @@ def process_to_tka(uploaded_siswa, uploaded_to, sheet_siswa, target_sheets):
     df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=["NAMA SISWA"])
     df_hasil = df_hasil.astype(object).fillna("-")
     df_hasil.index = range(1, len(df_hasil) + 1)
-
+    df_hasil.index.name = "No"
     return df_hasil
 
 def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
@@ -198,7 +198,8 @@ def process_kehadiran(uploaded_file, sheet_siswa, target_sheets):
     )
     df_hasil = df_hasil.fillna("0").astype(str)
     df_hasil.index = range(1, len(df_hasil) + 1)
-
+    df_hasil.index.name = "No"
+    
     return df_hasil
 
 def calculate_total_kehadiran(df_monthly):
@@ -237,6 +238,7 @@ def calculate_total_kehadiran(df_monthly):
             )
 
     df_total.index = df_monthly.index
+    df_total.index.name = "No"
     return df_total
 
 def process_binsik(
@@ -336,7 +338,8 @@ def process_binsik(
   df_hasil = df_hasil.drop(columns=["key_match"]).dropna(subset=["NAMA SISWA"])
   df_hasil = df_hasil.astype(object).fillna("-")
   df_hasil.index = range(1, len(df_hasil) + 1)
-
+  df_hasil.index.name = "No"
+  
   return df_hasil
 
 tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik = st.tabs(
