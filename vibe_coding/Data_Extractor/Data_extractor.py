@@ -491,7 +491,7 @@ with tab_to_tka:
 
             st.dataframe(df_avg_kelas, use_container_width=True)
 
-            # --- PLOTLY EXPRESS LINE CHART ---
+# --- PLOTLY EXPRESS LINE CHART ---
             fig = px.line(
                 df_avg_kelas,
                 x="KELAS (DI PRIORITY)",
@@ -503,7 +503,12 @@ with tab_to_tka:
                     "value": "Nilai Rata-Rata",
                     "variable": "Subtes / Kategori",
                 },
-                text_auto=".2f",
+            )
+
+            # Display numeric labels above markers
+            fig.update_traces(
+                texttemplate="%{y:.2f}",
+                textposition="top center"
             )
 
             fig.update_layout(
