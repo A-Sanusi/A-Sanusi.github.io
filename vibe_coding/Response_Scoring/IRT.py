@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats as stats
 import streamlit as st
+from scipy.special import logsumexp
 
 # ============================================================
 # 1. CONFIGURATION
@@ -148,7 +149,7 @@ def score_eap_3pl(
     log_posterior = log_L + log_prior[None, :]
 
     # Normalize using log-sum-exp for numerical stability.
-    log_normalizer = stats.logsumexp(
+    log_normalizer = logsumexp(
         log_posterior,
         axis=1,
         keepdims=True
