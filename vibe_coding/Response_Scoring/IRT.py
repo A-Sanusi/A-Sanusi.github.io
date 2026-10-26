@@ -1,12 +1,25 @@
+```python
 import io
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
 import streamlit as st
 
-st.set_page_config(page_title="Skoring IRT 3PL", layout="wide")
-st.link_button("Menu", "https://a-sanusi.github.io/vibe_coding/vibe_coding.html")
-st.title("Skoring IRT")
+# ============================================================
+# 1. CONFIGURATION
+# ============================================================
+
+st.set_page_config(
+    page_title="Skoring IRT 3PL",
+    layout="wide"
+)
+
+st.link_button(
+    "Menu",
+    "https://a-sanusi.github.io/vibe_coding/vibe_coding.html"
+)
+
+st.title("Skoring IRT 3PL")
 
 D = 1.702
 TARGET_MEAN = 500.0
@@ -14,160 +27,603 @@ TARGET_SD = 75.0
 MIN_SCORE = 200.0
 MAX_SCORE = 800.0
 
+
+# ============================================================
+# 2. HELPER FUNCTIONS
+# ============================================================
+
 def clean_question_id(series_or_columns):
-    """Normalize Question IDs for robust matching."""
+    """Normalize Question IDs for consistent matching."""
     return (
         pd.Series(series_or_columns)
-        .astype(str)
+        .astype("string")
         .str.replace(r"^ID\s*:\s*", "", regex=True)
         .str.replace(r"\.0$", "", regex=True)
         .str.strip()
+        .replace("", pd.NA)
     )
 
-# --- 1. File Uploaders ---
+
+def score_eap_3pl(
+    X,
+    a,
+    b,
+    c,
+    D=1.702,
+    grid_points=401
+):
+    """
+    Calculate EAP theta estimates and posterior SDs
+    using the 3PL IRT model.
+
+    X: Binary response matrix (students x items).
+    a: Item discrimination parameters.
+    b: Item difficulty parameters.
+    c: Item guessing parameters.
+
+    Returns:
+        theta_eap: EAP ability estimates.
+        se_eap: Posterior standard deviations.
+    """
+
+    X = np.asarray(X, dtype=float)
+    a = np.asarray(a, dtype=float)
+    b = np.asarray(b, dtype=float)
+    c = np.asarray(c, dtype=float)
+
+    if X.ndim != 2:
+        raise ValueError("Matriks jawaban harus dua dimensi.")
+
+    n_students, n_items = X.shape
+
+    if n_students == 0 or n_items == 0:
+        raise ValueError(
+            "Matriks jawaban tidak boleh kosong."
+        )
+
+    if not (len(a) == len(b) == len(c) == n_items):
+        raise ValueError(
+            "Jumlah parameter tidak sama dengan jumlah soal."
+        )
+
+    if grid_points < 2:
+        raise ValueError(
+            "grid_points minimal harus 2."
+        )
+
+    if not np.isfinite(X).all():
+        raise ValueError(
+            "Matriks jawaban mengandung nilai tidak valid."
+        )
+
+    if not np.isin(X, [0, 1]).all():
+        raise ValueError(
+            "Jawaban hanya boleh berupa 0 dan 1."
+        )
+
+    # Validate IRT parameters.
+    valid_params = (
+        np.isfinite(a)
+        & np.isfinite(b)
+        & np.isfinite(c)
+        & (a > 0)
+        & (c >= 0)
+        & (c < 1)
+    )
+
+    if not valid_params.all():
+        raise ValueError(
+            "Parameter IRT tidak valid. "
+            "Pastikan a > 0, b bernilai finite, "
+            "dan 0 <= c < 1."
+        )
+
+    # Theta grid and standard normal prior.
+    theta_grid = np.linspace(-4.0, 4.0, grid_points)
+
+    log_prior = stats.norm.logpdf(theta_grid, loc=0, scale=1)
+
+    # 3PL probabilities, using a stable logistic function.
+    z = D * a[:, None] * (
+        theta_grid[None, :] - b[:, None]
+    )
+
+    logistic_prob = stats.logistic.cdf(z)
+
+    P = c[:, None] + (
+        1.0 - c[:, None]
+    ) * logistic_prob
+
+    P = np.clip(P, 1e-12, 1.0 - 1e-12)
+
+    log_P = np.log(P)
+    log_Q = np.log1p(-P)
+
+    # Log likelihood: students x theta grid.
+    log_L = (
+        X @ log_P
+        + (1.0 - X) @ log_Q
+    )
+
+    # Posterior proportional to likelihood * prior.
+    log_posterior = log_L + log_prior[None, :]
+
+    # Normalize using log-sum-exp for numerical stability.
+    log_normalizer = stats.logsumexp(
+        log_posterior,
+        axis=1,
+        keepdims=True
+    )
+
+    posterior = np.exp(
+        log_posterior - log_normalizer
+    )
+
+    # EAP theta and posterior standard deviation.
+    theta_eap = np.sum(
+        posterior * theta_grid[None, :],
+        axis=1
+    )
+
+    variance = np.sum(
+        posterior
+        * (
+            theta_grid[None, :]
+            - theta_eap[:, None]
+        ) ** 2,
+        axis=1
+    )
+
+    se_eap = np.sqrt(
+        np.maximum(variance, 0.0)
+    )
+
+    return theta_eap, se_eap
+
+
+# ============================================================
+# 3. FILE UPLOADERS
+# ============================================================
+
 col1, col2 = st.columns(2)
 
 with col1:
     uploaded_file = st.file_uploader(
-        "1. Upload Jawaban Siswa", type=["xlsx", "xls", "xlsm"]
+        "1. Upload Jawaban Siswa",
+        type=["xlsx", "xls", "xlsm"]
     )
 
 with col2:
     uploaded_file_2 = st.file_uploader(
-        "2. Upload Parameter Try Out", type=["xlsx", "xls", "xlsm"]
+        "2. Upload Parameter Try Out",
+        type=["xlsx", "xls", "xlsm"]
     )
 
 if uploaded_file is None or uploaded_file_2 is None:
-    st.info("Silakan upload kedua file Excel untuk melanjutkan.")
+    st.info(
+        "Silakan upload kedua file Excel untuk melanjutkan."
+    )
     st.stop()
 
-# --- 2. Load Responses Sheet ---
-excel_file = pd.ExcelFile(uploaded_file)
-selected_sheet = st.selectbox(
-    "Pilih Sheet Jawaban:", excel_file.sheet_names, key="sheet_resp"
+
+# ============================================================
+# 4. LOAD RESPONSE DATA
+# ============================================================
+
+try:
+    excel_file = pd.ExcelFile(uploaded_file)
+
+    selected_sheet = st.selectbox(
+        "Pilih Sheet Jawaban:",
+        excel_file.sheet_names,
+        key="sheet_resp"
+    )
+
+    df_resp_raw = pd.read_excel(
+        excel_file,
+        sheet_name=selected_sheet,
+        header=1
+    )
+
+except Exception as e:
+    st.error(f"Gagal membaca file jawaban: {e}")
+    st.stop()
+
+# Remove completely empty rows and RESET INDEX.
+df_resp = (
+    df_resp_raw
+    .dropna(how="all")
+    .reset_index(drop=True)
+    .copy()
 )
 
-df_resp_raw = pd.read_excel(uploaded_file, sheet_name=selected_sheet, header=1)
-df_resp = df_resp_raw.dropna(how="all").copy()
+if df_resp.empty:
+    st.error("Sheet jawaban tidak memiliki data.")
+    st.stop()
+
+if len(df_resp.columns) < 4:
+    st.error(
+        "Format sheet jawaban tidak sesuai. "
+        "Diperlukan kolom Nama, Cabang, satu kolom tambahan, "
+        "dan kolom-kolom soal."
+    )
+    st.stop()
 
 test_taker_col = df_resp.columns[0]
 cabang_col_name = df_resp.columns[1]
 raw_q_cols = df_resp.columns[3:]
 
-# --- 3. Load & Align Parameters ---
-excel_file_2 = pd.ExcelFile(uploaded_file_2)
-selected_sheet_2 = st.selectbox(
-    "Pilih Sheet Parameter:", excel_file_2.sheet_names, key="sheet_param"
-)
-df_param_raw = pd.read_excel(uploaded_file_2, sheet_name=selected_sheet_2)
-
-df_param = df_param_raw.iloc[:, [2, 3, 4, 5, 6]].copy()
-df_param.columns = ["Nomor Soal", "Question ID", "Discrimination", "Difficulty", "Guessing"]
-df_param["Clean_ID"] = clean_question_id(df_param["Question ID"])
-
-# Match response columns with parameter rows via Question ID
-resp_q_ids = clean_question_id(raw_q_cols)
-resp_id_map = dict(zip(raw_q_cols, resp_q_ids))
-
-matched_q_cols = [col for col in raw_q_cols if resp_id_map[col] in set(df_param["Clean_ID"])]
-
-if not matched_q_cols:
-    st.error("Gagal mencocokkan Question ID antara sheet jawaban dan sheet parameter.")
+if len(raw_q_cols) == 0:
+    st.error(
+        "Kolom soal tidak ditemukan mulai kolom keempat."
+    )
     st.stop()
 
+
+# ============================================================
+# 5. LOAD ITEM PARAMETERS
+# ============================================================
+
+try:
+    excel_file_2 = pd.ExcelFile(uploaded_file_2)
+
+    selected_sheet_2 = st.selectbox(
+        "Pilih Sheet Parameter:",
+        excel_file_2.sheet_names,
+        key="sheet_param"
+    )
+
+    df_param_raw = pd.read_excel(
+        excel_file_2,
+        sheet_name=selected_sheet_2
+    )
+
+except Exception as e:
+    st.error(f"Gagal membaca file parameter: {e}")
+    st.stop()
+
+if df_param_raw.shape[1] < 7:
+    st.error(
+        "Format file parameter tidak sesuai. "
+        "Diperlukan minimal tujuh kolom."
+    )
+    st.stop()
+
+df_param = df_param_raw.iloc[:, [2, 3, 4, 5, 6]].copy()
+
+df_param.columns = [
+    "Nomor Soal",
+    "Question ID",
+    "Discrimination",
+    "Difficulty",
+    "Guessing"
+]
+
+df_param["Clean_ID"] = clean_question_id(
+    df_param["Question ID"]
+).to_numpy()
+
+# Remove rows without a Question ID.
+df_param = df_param.dropna(
+    subset=["Clean_ID"]
+).copy()
+
+if df_param.empty:
+    st.error(
+        "Question ID tidak ditemukan pada file parameter."
+    )
+    st.stop()
+
+# Check duplicate normalized IDs in the parameter file.
+if df_param["Clean_ID"].duplicated().any():
+    duplicates = (
+        df_param.loc[
+            df_param["Clean_ID"].duplicated(keep=False),
+            "Clean_ID"
+        ]
+        .unique()
+        .tolist()
+    )
+
+    st.error(
+        "Terdapat Question ID duplikat pada file parameter: "
+        + ", ".join(map(str, duplicates[:20]))
+    )
+    st.stop()
+
+
+# ============================================================
+# 6. MATCH QUESTION IDS
+# ============================================================
+
+resp_q_ids = clean_question_id(raw_q_cols)
+
+# Check IDs that are blank or duplicated after normalization.
+if resp_q_ids.isna().any():
+    st.error(
+        "Terdapat Question ID kosong pada header kolom jawaban."
+    )
+    st.stop()
+
+if resp_q_ids.duplicated().any():
+    duplicates = (
+        resp_q_ids[
+            resp_q_ids.duplicated(keep=False)
+        ]
+        .unique()
+        .tolist()
+    )
+
+    st.error(
+        "Terdapat Question ID duplikat pada sheet jawaban: "
+        + ", ".join(map(str, duplicates[:20]))
+    )
+    st.stop()
+
+resp_id_map = dict(zip(raw_q_cols, resp_q_ids))
+
+param_id_set = set(df_param["Clean_ID"])
+
+matched_q_cols = [
+    col
+    for col in raw_q_cols
+    if resp_id_map[col] in param_id_set
+]
+
+if not matched_q_cols:
+    st.error(
+        "Gagal mencocokkan Question ID antara "
+        "sheet jawaban dan sheet parameter."
+    )
+    st.stop()
+
+matched_param_ids = [
+    resp_id_map[col]
+    for col in matched_q_cols
+]
+
 df_param_indexed = df_param.set_index("Clean_ID")
-matched_param_ids = [resp_id_map[col] for col in matched_q_cols]
-df_param_aligned = df_param_indexed.loc[matched_param_ids]
 
-a = pd.to_numeric(df_param_aligned["Discrimination"], errors="coerce").values
-b = pd.to_numeric(df_param_aligned["Difficulty"], errors="coerce").values
-c = pd.to_numeric(df_param_aligned["Guessing"], errors="coerce").values
+df_param_aligned = df_param_indexed.loc[
+    matched_param_ids
+].copy()
 
-# Prepare binary response matrix
-X = (
-    df_resp[matched_q_cols]
-    .astype(str)
-    .apply(lambda col: col.str.strip())
-    .apply(pd.to_numeric, errors="coerce")
-    .fillna(0)
-    .values
+# Report unmatched columns.
+unmatched_q_cols = [
+    col
+    for col in raw_q_cols
+    if col not in matched_q_cols
+]
+
+st.success(
+    f"Berhasil mencocokkan {len(matched_q_cols)} soal."
 )
 
-# --- 4. Vectorized 3PL EAP Scoring Function ---
-def score_eap_3pl(X, a, b, c, D=1.702, grid_points=101):
-    theta_grid = np.linspace(-4.0, 4.0, grid_points)
-    prior_weights = stats.norm.pdf(theta_grid, 0, 1)
-    prior_weights /= np.sum(prior_weights)
-
-    # Calculate item response probabilities (N_items, N_grid)
-    exp_term = np.exp(-D * a[:, None] * (theta_grid[None, :] - b[:, None]))
-    P = c[:, None] + (1.0 - c[:, None]) / (1.0 + exp_term)
-    P = np.clip(P, 1e-9, 1.0 - 1e-9)
-
-    log_P = np.log(P)
-    log_Q = np.log(1.0 - P)
-
-    # Log-Likelihood per respondent (N_students, N_grid)
-    log_L = np.dot(X, log_P) + np.dot(1.0 - X, log_Q)
-
-    # Log-sum-exp trick for numerical precision
-    max_log_L = np.max(log_L, axis=1, keepdims=True)
-    L = np.exp(log_L - max_log_L)
-
-    # Normalize posterior distribution
-    posterior = L * prior_weights[None, :]
-    posterior_norm = posterior / np.sum(posterior, axis=1, keepdims=True)
-
-    # Expectation (Mean) and Variance (SE)
-    theta_eap = np.sum(posterior_norm * theta_grid[None, :], axis=1)
-    se_eap = np.sqrt(
-        np.sum(posterior_norm * ((theta_grid[None, :] - theta_eap[:, None]) ** 2), axis=1)
+if unmatched_q_cols:
+    st.warning(
+        f"{len(unmatched_q_cols)} kolom soal tidak memiliki "
+        "parameter yang cocok dan tidak digunakan dalam skoring."
     )
-    return theta_eap, se_eap
 
-# --- 5. Calculation & Display ---
+
+# ============================================================
+# 7. VALIDATE ITEM PARAMETERS
+# ============================================================
+
+a = pd.to_numeric(
+    df_param_aligned["Discrimination"],
+    errors="coerce"
+).to_numpy(dtype=float)
+
+b = pd.to_numeric(
+    df_param_aligned["Difficulty"],
+    errors="coerce"
+).to_numpy(dtype=float)
+
+c = pd.to_numeric(
+    df_param_aligned["Guessing"],
+    errors="coerce"
+).to_numpy(dtype=float)
+
+valid_params = (
+    np.isfinite(a)
+    & np.isfinite(b)
+    & np.isfinite(c)
+    & (a > 0)
+    & (c >= 0)
+    & (c < 1)
+)
+
+if not valid_params.all():
+    bad_ids = np.asarray(
+        matched_param_ids,
+        dtype=object
+    )[~valid_params]
+
+    st.error(
+        "Parameter IRT tidak valid pada Question ID: "
+        + ", ".join(map(str, bad_ids[:20]))
+        + ". Pastikan a > 0, b finite, dan 0 <= c < 1."
+    )
+    st.stop()
+
+
+# ============================================================
+# 8. PREPARE BINARY RESPONSE MATRIX
+# ============================================================
+
+response_df = df_resp[matched_q_cols].apply(
+    pd.to_numeric,
+    errors="coerce"
+)
+
+# Detect nonnumeric values separately from genuinely blank cells.
+raw_response_df = df_resp[matched_q_cols]
+
+nonnumeric = (
+    raw_response_df.notna()
+    & response_df.isna()
+)
+
+if nonnumeric.any().any():
+    bad_columns = (
+        nonnumeric.columns[
+            nonnumeric.any(axis=0)
+        ]
+        .astype(str)
+        .tolist()
+    )
+
+    st.error(
+        "Ditemukan jawaban nonnumerik pada kolom: "
+        + ", ".join(bad_columns[:20])
+        + ". Konversikan jawaban menjadi 0 atau 1 terlebih dahulu."
+    )
+    st.stop()
+
+# Reject values other than 0 or 1.
+invalid_values = (
+    response_df.notna()
+    & ~response_df.isin([0, 1])
+)
+
+if invalid_values.any().any():
+    bad_columns = (
+        invalid_values.columns[
+            invalid_values.any(axis=0)
+        ]
+        .astype(str)
+        .tolist()
+    )
+
+    st.error(
+        "Ditemukan nilai jawaban selain 0 dan 1 pada kolom: "
+        + ", ".join(bad_columns[:20])
+    )
+    st.stop()
+
+# Blank responses are treated as incorrect (0).
+# Change this policy if blanks should be omitted from likelihood.
+X = response_df.fillna(0).to_numpy(dtype=float)
+
+if X.shape[0] == 0:
+    st.error("Tidak ada data siswa untuk diskoring.")
+    st.stop()
+
+
+# ============================================================
+# 9. CALCULATE EAP SCORES
+# ============================================================
+
 st.divider()
-st.subheader(f"Hasil Skoring")
+st.subheader("Hasil Skoring")
 
-with st.spinner("Menghitung skor IRT EAP..."):
-    theta_estimates, se_estimates = score_eap_3pl(X, a, b, c, D)
+try:
+    with st.spinner("Menghitung skor IRT EAP..."):
+        theta_estimates, se_estimates = score_eap_3pl(
+            X=X,
+            a=a,
+            b=b,
+            c=c,
+            D=D,
+            grid_points=401
+        )
+
+except Exception as e:
+    st.error(f"Gagal menghitung skor IRT: {e}")
+    st.stop()
+
+
+# ============================================================
+# 10. BUILD STUDENT RESULTS
+# ============================================================
 
 results = []
-for idx, row in df_resp.iterrows():
+
+for pos in range(len(df_resp)):
+    row = df_resp.iloc[pos]
+
     test_taker = row[test_taker_col]
-    if pd.isna(test_taker):
+
+    # Skip rows without a student name.
+    if pd.isna(test_taker) or not str(test_taker).strip():
         continue
 
     cabang_val = row[cabang_col_name]
-    raw_score = np.sum(X[idx])
-    theta_val = theta_estimates[idx]
 
+    raw_score = int(np.sum(X[pos]))
+    theta_val = float(theta_estimates[pos])
+    se_val = float(se_estimates[pos])
+
+    # Linear transformation from theta to reporting scale.
     scaled_score = np.clip(
-        round(TARGET_MEAN + TARGET_SD * theta_val, 2), MIN_SCORE, MAX_SCORE
+        round(
+            TARGET_MEAN + TARGET_SD * theta_val,
+            2
+        ),
+        MIN_SCORE,
+        MAX_SCORE
     )
 
-    results.append(
-        {
-            "Nama": test_taker,
-            "Cabang": cabang_val,
-            "Banyak Soal Benar": int(raw_score),
-            "Estimasi Theta": round(theta_val, 4),
-            "Skor IRT": scaled_score,
-        }
+    results.append({
+        "Nama": test_taker,
+        "Cabang": cabang_val,
+        "Banyak Soal Benar": raw_score,
+        "Estimasi Theta": round(theta_val, 4),
+        "SE Theta": round(se_val, 4),
+        "Skor IRT": scaled_score
+    })
+
+if not results:
+    st.warning(
+        "Tidak ada data siswa yang valid untuk diskoring."
     )
+    st.stop()
 
-df_results = pd.DataFrame(results).set_index("Nama")
-st.dataframe(df_results, use_container_width=True)
+df_results = pd.DataFrame(results)
 
-# --- 6. Export Results ---
+# Keep names as a regular column, so duplicate student names
+# do not silently merge or disappear.
+st.dataframe(
+    df_results,
+    use_container_width=True,
+    hide_index=True
+)
+
+
+# ============================================================
+# 11. EXPORT RESULTS TO EXCEL
+# ============================================================
+
 buffer = io.BytesIO()
-with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-    df_results.to_excel(writer, sheet_name="IRT_Results")
 
-output_filename = f"{uploaded_file.name.rsplit('.', 1)[0]} IRT SKORING.xlsx"
+try:
+    with pd.ExcelWriter(
+        buffer,
+        engine="openpyxl"
+    ) as writer:
+        df_results.to_excel(
+            writer,
+            sheet_name="IRT_Results",
+            index=False
+        )
+
+except Exception as e:
+    st.error(f"Gagal membuat file Excel: {e}")
+    st.stop()
+
+output_filename = (
+    f"{uploaded_file.name.rsplit('.', 1)[0]} "
+    "IRT SKORING.xlsx"
+)
 
 st.download_button(
     label="Download Hasil Excel",
     data=buffer.getvalue(),
     file_name=output_filename,
+    mime=(
+        "application/vnd.openxmlformats-officedocument."
+        "spreadsheetml.sheet"
+    )
 )
+```
