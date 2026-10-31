@@ -420,6 +420,14 @@ st.dataframe(
     hide_index=True
 )
 
+st.divider()
+st.subheader("Hasil IRT")
+st.datafreame(
+    scaled_scores
+    use_container_width=True,
+    hide_index=True
+)
+
 
 # ============================================================
 # 7. EXPORT RESULTS TO EXCEL
