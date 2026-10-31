@@ -423,7 +423,7 @@ st.dataframe(
 st.divider()
 st.subheader("Hasil IRT")
 st.dataframe(
-    scaled_scores,
+    df_results[f"Skor IRT ({label})"],
     use_container_width=True,
     hide_index=True
 )
