@@ -348,7 +348,7 @@ if resp_q_ids.isna().any() or resp_q_ids.duplicated().any():
 resp_id_map = dict(zip(raw_q_cols, resp_q_ids))
 
 st.divider()
-st.subheader("Hasil Lengkap Skoring IRT")
+st.subheader("Parameter IRT")
 
 df_results = process_nilai(
     df_resp=df_resp,
@@ -376,7 +376,7 @@ st.dataframe(
 )
 
 st.divider()
-st.subheader("Hasil IRT (Hanya Kolom Skor IRT untuk Semua Parameter)")
+st.subheader("Nilai IRT")
 
 # Dynamically gather student info and all distinct Skor IRT columns
 irt_score_columns = [
