@@ -224,7 +224,7 @@ with col1:
 
 with col2:
     uploaded_files_param = st.file_uploader(
-        "2. Upload Parameter Try Out (Bisa Pilih Banyak File)",
+        "2. Upload Parameter Try Out",
         type=["xlsx", "xls", "xlsm"],
         accept_multiple_files=True
     )
