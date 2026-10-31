@@ -304,4 +304,341 @@ for idx, param_file in enumerate(uploaded_files_param):
         st.stop()
 
 # Combine all loaded parameter dataframes into one
-df_param = pd.concat(param_dfs,
+df_param = pd.concat(param_dfs, ignore_index=True)
+
+df_param["Clean_ID"] = clean_question_id(
+    df_param["Question ID"]
+).to_numpy()
+
+# Remove rows without a Question ID.
+df_param = df_param.dropna(
+    subset=["Clean_ID"]
+).copy()
+
+if df_param.empty:
+    st.error(
+        "Question ID tidak ditemukan pada file-file parameter yang diupload."
+    )
+    st.stop()
+
+# Check duplicate normalized IDs across all parameter files.
+if df_param["Clean_ID"].duplicated().any():
+    duplicates = (
+        df_param.loc[
+            df_param["Clean_ID"].duplicated(keep=False),
+            "Clean_ID"
+        ]
+        .unique()
+        .tolist()
+    )
+
+    st.error(
+        "Terdapat Question ID duplikat antar file parameter: "
+        + ", ".join(map(str, duplicates[:20]))
+    )
+    st.stop()
+
+
+# ============================================================
+# 6. MATCH QUESTION IDS
+# ============================================================
+
+resp_q_ids = clean_question_id(raw_q_cols)
+
+# Check IDs that are blank or duplicated after normalization.
+if resp_q_ids.isna().any():
+    st.error(
+        "Terdapat Question ID kosong pada header kolom jawaban."
+    )
+    st.stop()
+
+if resp_q_ids.duplicated().any():
+    duplicates = (
+        resp_q_ids[
+            resp_q_ids.duplicated(keep=False)
+        ]
+        .unique()
+        .tolist()
+    )
+
+    st.error(
+        "Terdapat Question ID duplikat pada sheet jawaban: "
+        + ", ".join(map(str, duplicates[:20]))
+    )
+    st.stop()
+
+resp_id_map = dict(zip(raw_q_cols, resp_q_ids))
+
+param_id_set = set(df_param["Clean_ID"])
+
+matched_q_cols = [
+    col
+    for col in raw_q_cols
+    if resp_id_map[col] in param_id_set
+]
+
+if not matched_q_cols:
+    st.error(
+        "Gagal mencocokkan Question ID antara "
+        "sheet jawaban dan file-file parameter."
+    )
+    st.stop()
+
+matched_param_ids = [
+    resp_id_map[col]
+    for col in matched_q_cols
+]
+
+df_param_indexed = df_param.set_index("Clean_ID")
+
+df_param_aligned = df_param_indexed.loc[
+    matched_param_ids
+].copy()
+
+# Report unmatched columns.
+unmatched_q_cols = [
+    col
+    for col in raw_q_cols
+    if col not in matched_q_cols
+]
+
+st.success(
+    f"Berhasil mencocokkan {len(matched_q_cols)} soal dari total {len(uploaded_files_param)} file parameter."
+)
+
+if unmatched_q_cols:
+    st.warning(
+        f"{len(unmatched_q_cols)} kolom soal tidak memiliki "
+        "parameter yang cocok dan tidak digunakan dalam skoring."
+    )
+
+
+# ============================================================
+# 7. VALIDATE ITEM PARAMETERS
+# ============================================================
+
+a = pd.to_numeric(
+    df_param_aligned["Discrimination"],
+    errors="coerce"
+).to_numpy(dtype=float)
+
+b = pd.to_numeric(
+    df_param_aligned["Difficulty"],
+    errors="coerce"
+).to_numpy(dtype=float)
+
+c = pd.to_numeric(
+    df_param_aligned["Guessing"],
+    errors="coerce"
+).to_numpy(dtype=float)
+
+valid_params = (
+    np.isfinite(a)
+    & np.isfinite(b)
+    & np.isfinite(c)
+    & (a > 0)
+    & (c >= 0)
+    & (c < 1)
+)
+
+if not valid_params.all():
+    bad_ids = np.asarray(
+        matched_param_ids,
+        dtype=object
+    )[~valid_params]
+
+    st.error(
+        "Parameter IRT tidak valid pada Question ID: "
+        + ", ".join(map(str, bad_ids[:20]))
+        + ". Pastikan a > 0, b finite, dan 0 <= c < 1."
+    )
+    st.stop()
+
+
+# ============================================================
+# 8. PREPARE BINARY RESPONSE MATRIX
+# ============================================================
+
+response_df = df_resp[matched_q_cols].apply(
+    pd.to_numeric,
+    errors="coerce"
+)
+
+# Detect nonnumeric values separately from genuinely blank cells.
+raw_response_df = df_resp[matched_q_cols]
+
+nonnumeric = (
+    raw_response_df.notna()
+    & response_df.isna()
+)
+
+if nonnumeric.any().any():
+    bad_columns = (
+        nonnumeric.columns[
+            nonnumeric.any(axis=0)
+        ]
+        .astype(str)
+        .tolist()
+    )
+
+    st.error(
+        "Ditemukan jawaban nonnumerik pada kolom: "
+        + ", ".join(bad_columns[:20])
+        + ". Konversikan jawaban menjadi 0 atau 1 terlebih dahulu."
+    )
+    st.stop()
+
+# Reject values other than 0 or 1.
+invalid_values = (
+    response_df.notna()
+    & ~response_df.isin([0, 1])
+)
+
+if invalid_values.any().any():
+    bad_columns = (
+        invalid_values.columns[
+            invalid_values.any(axis=0)
+        ]
+        .astype(str)
+        .tolist()
+    )
+
+    st.error(
+        "Ditemukan nilai jawaban selain 0 dan 1 pada kolom: "
+        + ", ".join(bad_columns[:20])
+    )
+    st.stop()
+
+# Blank responses are treated as incorrect (0).
+X = response_df.fillna(0).to_numpy(dtype=float)
+
+if X.shape[0] == 0:
+    st.error("Tidak ada data siswa untuk diskoring.")
+    st.stop()
+
+
+# ============================================================
+# 9. CALCULATE EAP SCORES
+# ============================================================
+
+st.divider()
+st.subheader("Hasil Skoring")
+
+try:
+    with st.spinner("Menghitung skor IRT EAP..."):
+        theta_estimates, se_estimates = score_eap_3pl(
+            X=X,
+            a=a,
+            b=b,
+            c=c,
+            D=D,
+            grid_points=401
+        )
+
+except Exception as e:
+    st.error(f"Gagal menghitung skor IRT: {e}")
+    st.stop()
+
+
+# ============================================================
+# 10. BUILD STUDENT RESULTS (MULTIPLE PARAMETERS)
+# ============================================================
+
+results = []
+total_items = len(matched_q_cols)
+
+for pos in range(len(df_resp)):
+    row = df_resp.iloc[pos]
+    test_taker = row[test_taker_col]
+
+    # Skip rows without a student name.
+    if pd.isna(test_taker) or not str(test_taker).strip():
+        continue
+
+    cabang_val = row[cabang_col_name]
+
+    raw_score = int(np.sum(X[pos]))
+    pct_correct = round((raw_score / total_items) * 100, 2)
+    theta_val = float(theta_estimates[pos])
+    se_val = float(se_estimates[pos])
+
+    # Linear transformation from theta to reporting scale.
+    scaled_score = np.clip(
+        round(
+            TARGET_MEAN + TARGET_SD * theta_val,
+            2
+        ),
+        MIN_SCORE,
+        MAX_SCORE
+    )
+
+    results.append({
+        "Nama": test_taker,
+        "Cabang": cabang_val,
+        "Jumlah Soal": total_items,
+        "Banyak Soal Benar": raw_score,
+        "Persentase Benar (%)": pct_correct,
+        "Estimasi Theta (Ability)": round(theta_val, 4),
+        "SE Theta (Error)": round(se_val, 4),
+        "Skor IRT": scaled_score
+    })
+
+if not results:
+    st.warning(
+        "Tidak ada data siswa yang valid untuk diskoring."
+    )
+    st.stop()
+
+df_results = pd.DataFrame(results)
+
+st.dataframe(
+    df_results,
+    use_container_width=True,
+    hide_index=True
+)
+
+
+# ============================================================
+# 11. EXPORT RESULTS TO MULTI-SHEET EXCEL
+# ============================================================
+
+buffer = io.BytesIO()
+
+try:
+    with pd.ExcelWriter(
+        buffer,
+        engine="openpyxl"
+    ) as writer:
+        # Sheet 1: Student IRT Results
+        df_results.to_excel(
+            writer,
+            sheet_name="Hasil_Skor_Siswa",
+            index=False
+        )
+
+        # Sheet 2: Combined Item Parameters (a, b, c) from all uploaded files
+        df_param_aligned_export = df_param_aligned.copy().reset_index()
+        df_param_aligned_export.to_excel(
+            writer,
+            sheet_name="Parameter_Soal",
+            index=False
+        )
+
+except Exception as e:
+    st.error(f"Gagal membuat file Excel: {e}")
+    st.stop()
+
+output_filename = (
+    f"{uploaded_file.name.rsplit('.', 1)[0]} "
+    "IRT_3PL_FULL_PARAMS.xlsx"
+)
+
+st.download_button(
+    label="Download Hasil & Parameter Excel",
+    data=buffer.getvalue(),
+    file_name=output_filename,
+    mime=(
+        "application/vnd.openxmlformats-officedocument."
+        "spreadsheetml.sheet"
+    )
+)
