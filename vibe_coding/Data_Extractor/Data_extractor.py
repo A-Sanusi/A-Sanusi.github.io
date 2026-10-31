@@ -48,6 +48,108 @@ def process_database(uploaded_file) -> pd.DataFrame:
     df_merged = df_merged.astype(object).fillna("-")
     return df_merged
 
+def process_to_utbk(
+    uploaded_siswa, uploaded_subtests: dict, sheet_siswa: str
+) -> pd.DataFrame:
+    """Processes UTBK scores where each subtest comes from a distinct uploaded file.
+    
+    uploaded_subtests: dict mapping {subtest_label: uploaded_file_object}
+    """
+    excel_siswa = pd.ExcelFile(uploaded_siswa)
+
+    # 1. Base student data
+    df_siswa_raw = excel_siswa.parse(sheet_name=sheet_siswa, header=0)
+    df_siswa = df_siswa_raw.dropna(how="all").copy()
+    df_siswa.columns = df_siswa.columns.astype(str).str.strip()
+
+    selected_siswa_cols = [
+        c
+        for c in [
+            "NAMA AKUN TO",
+            "NAMA SISWA",
+            "KELAS (DI PRIORITY)",
+        ]
+        if c in df_siswa.columns
+    ]
+
+    col_siswa_akun = next(
+        (c for c in ["NAMA AKUN TO", "NAMA SISWA"] if c in df_siswa.columns),
+        df_siswa.columns[1] if len(df_siswa.columns) > 1 else df_siswa.columns[0],
+    )
+
+    df_siswa["key_match"] = (
+        df_siswa[col_siswa_akun].fillna("").astype(str).str.strip().str.lower()
+    )
+
+    df_hasil = df_siswa[selected_siswa_cols + ["key_match"]].copy()
+
+    selected_to_cols = ["TOTAL BENAR", "NILAI", "KATEGORI"]
+
+    # 2. Iterate through each uploaded subtest file
+    for subtest_name, file_obj in uploaded_subtests.items():
+        if file_obj is None:
+            continue
+
+        excel_subtest = pd.ExcelFile(file_obj)
+
+        # Parse first sheet (or target sheet if standard)
+        target_sheet = excel_subtest.sheet_names[0]
+        df_nilai_raw = excel_subtest.parse(sheet_name=target_sheet, header=7).dropna(
+            how="all"
+        )
+        df_nilai_raw.columns = df_nilai_raw.columns.astype(str).str.strip()
+
+        col_to_akun = next(
+            (
+                c
+                for c in ["NAMA AKUN TO", "NAMA SISWA"]
+                if c in df_nilai_raw.columns
+            ),
+            df_nilai_raw.columns[1]
+            if len(df_nilai_raw.columns) > 1
+            else df_nilai_raw.columns[0],
+        )
+
+        df_nilai_raw["key_match"] = (
+            df_nilai_raw[col_to_akun]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+            .str.lower()
+        )
+
+        available_score_cols = [
+            c for c in selected_to_cols if c in df_nilai_raw.columns
+        ]
+        df_sub = df_nilai_raw[["key_match"] + available_score_cols].drop_duplicates(
+            subset=["key_match"]
+        ).copy()
+
+        if "TOTAL BENAR" in df_sub.columns:
+            df_sub["TOTAL BENAR"] = (
+                pd.to_numeric(df_sub["TOTAL BENAR"], errors="coerce")
+                .round()
+                .astype("Int64")
+            )
+
+        rename_map = {
+            "TOTAL BENAR": f"Jumlah_Nilai_Benar {subtest_name}",
+            "NILAI": f"Nilai {subtest_name}",
+            "KATEGORI": f"Kategori {subtest_name}",
+        }
+        df_sub = df_sub.rename(columns=rename_map)
+
+        df_hasil = pd.merge(df_hasil, df_sub, on="key_match", how="left")
+
+    # 3. Cleanup
+    df_hasil = df_hasil.drop(columns=["key_match"])
+    if "NAMA SISWA" in df_hasil.columns:
+        df_hasil = df_hasil.dropna(subset=["NAMA SISWA"])
+
+    df_hasil = df_hasil.astype(object).fillna("-")
+    df_hasil.index = range(1, len(df_hasil) + 1)
+    df_hasil.index.name = "No"
+    return df_hasil
 
 def process_to_tka(
     uploaded_siswa, uploaded_to, sheet_siswa: str, target_sheets: list[str]
@@ -595,8 +697,54 @@ with tab_to_skd:
 
 # 4. TO UTBK TAB
 with tab_to_utbk:
-    st.header("Ekstrak Nilai UTBK")
-    st.info("Coming Soon")
+    st.header("Ekstrak Nilai TO UTBK 🟣")
+
+    uploaded_siswa_utbk = st.file_uploader(
+        "Upload File Excel Nama Siswa",
+        type=["xlsx", "xls", "xlsm"],
+        key="uploader_utbk_siswa",
+    )
+
+    uploaded_files_utbk = st.file_uploader(
+        "Upload File Nilai Subtes UTBK (Bisa Pilih Banyak File)",
+        type=["xlsx", "xls", "xlsm"],
+        accept_multiple_files=True,
+        key="uploader_utbk_subtests",
+    )
+
+    if uploaded_siswa_utbk is None or not uploaded_files_utbk:
+        st.info("Silakan upload file Nama Siswa dan minimal 1 file Subtes UTBK.")
+    else:
+        excel_siswa_utbk = pd.ExcelFile(uploaded_siswa_utbk)
+
+        selected_sheet_siswa_utbk = st.selectbox(
+            "Pilih Sheet Nama Siswa:",
+            excel_siswa_utbk.sheet_names,
+            key="sheet_siswa_utbk_select",
+        )
+
+        # Build mapping of file names (without extension) to uploaded file objects
+        subtests_dict = {}
+        for f in uploaded_files_utbk:
+            clean_name = f.name.rsplit(".", 1)[0]
+            subtests_dict[clean_name] = f
+
+        df_hasil_utbk = process_to_utbk(
+            uploaded_siswa_utbk, subtests_dict, selected_sheet_siswa_utbk
+        )
+
+        st.subheader("Tabel Nilai UTBK Siswa")
+        st.dataframe(df_hasil_utbk, use_container_width=True)
+
+        excel_bytes_utbk = convert_df_to_excel(
+            df_hasil_utbk, sheet_name="Hasil Nilai UTBK"
+        )
+        st.download_button(
+            label="Download Hasil Nilai UTBK",
+            data=excel_bytes_utbk,
+            file_name="Hasil_Nilai_UTBK.xlsx",
+            key="download_utbk",
+        )
 
 # 5. KEHADIRAN TAB
 with tab_kehadiran:
