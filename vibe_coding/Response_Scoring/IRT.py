@@ -422,7 +422,7 @@ st.dataframe(
 
 st.divider()
 st.subheader("Hasil IRT")
-st.datafreame(
+st.dataframe(
     df_results,
     use_container_width=True,
     hide_index=True
