@@ -503,7 +503,6 @@ if invalid_values.any().any():
     st.stop()
 
 # Blank responses are treated as incorrect (0).
-# Change this policy if blanks should be omitted from likelihood.
 X = response_df.fillna(0).to_numpy(dtype=float)
 
 if X.shape[0] == 0:
@@ -535,14 +534,14 @@ except Exception as e:
 
 
 # ============================================================
-# 10. BUILD STUDENT RESULTS
+# 10. BUILD STUDENT RESULTS (MULTIPLE PARAMETERS)
 # ============================================================
 
 results = []
+total_items = len(matched_q_cols)
 
 for pos in range(len(df_resp)):
     row = df_resp.iloc[pos]
-
     test_taker = row[test_taker_col]
 
     # Skip rows without a student name.
@@ -552,6 +551,7 @@ for pos in range(len(df_resp)):
     cabang_val = row[cabang_col_name]
 
     raw_score = int(np.sum(X[pos]))
+    pct_correct = round((raw_score / total_items) * 100, 2)
     theta_val = float(theta_estimates[pos])
     se_val = float(se_estimates[pos])
 
@@ -568,9 +568,11 @@ for pos in range(len(df_resp)):
     results.append({
         "Nama": test_taker,
         "Cabang": cabang_val,
+        "Jumlah Soal": total_items,
         "Banyak Soal Benar": raw_score,
-        "Estimasi Theta": round(theta_val, 4),
-        "SE Theta": round(se_val, 4),
+        "Persentase Benar (%)": pct_correct,
+        "Estimasi Theta (Ability)": round(theta_val, 4),
+        "SE Theta (Error)": round(se_val, 4),
         "Skor IRT": scaled_score
     })
 
@@ -582,8 +584,6 @@ if not results:
 
 df_results = pd.DataFrame(results)
 
-# Keep names as a regular column, so duplicate student names
-# do not silently merge or disappear.
 st.dataframe(
     df_results,
     use_container_width=True,
@@ -592,7 +592,7 @@ st.dataframe(
 
 
 # ============================================================
-# 11. EXPORT RESULTS TO EXCEL
+# 11. EXPORT RESULTS TO MULTI-SHEET EXCEL
 # ============================================================
 
 buffer = io.BytesIO()
@@ -602,9 +602,18 @@ try:
         buffer,
         engine="openpyxl"
     ) as writer:
+        # Sheet 1: Student IRT Results
         df_results.to_excel(
             writer,
-            sheet_name="IRT_Results",
+            sheet_name="Hasil_Skor_Siswa",
+            index=False
+        )
+
+        # Sheet 2: Item Parameters (a, b, c)
+        df_param_aligned_export = df_param_aligned.copy().reset_index()
+        df_param_aligned_export.to_excel(
+            writer,
+            sheet_name="Parameter_Soal",
             index=False
         )
 
@@ -614,11 +623,11 @@ except Exception as e:
 
 output_filename = (
     f"{uploaded_file.name.rsplit('.', 1)[0]} "
-    "IRT SKORING.xlsx"
+    "IRT_3PL_FULL_PARAMS.xlsx"
 )
 
 st.download_button(
-    label="Download Hasil Excel",
+    label="Download Hasil & Parameter Excel",
     data=buffer.getvalue(),
     file_name=output_filename,
     mime=(
