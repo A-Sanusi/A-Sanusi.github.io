@@ -188,7 +188,6 @@ def process_nilai(
 
             raw_scores = np.sum(X, axis=1).astype(int)
             total_items = len(matched_q_cols)
-            pct_correct = np.round((raw_scores / total_items) * 100, 2)
 
             scaled_scores = [
                 np.clip(round(TARGET_MEAN + TARGET_SD * float(th), 2), MIN_SCORE, MAX_SCORE)
@@ -196,7 +195,6 @@ def process_nilai(
             ]
 
             df_results[f"Jumlah Benar ({label})"] = raw_scores
-            df_results[f"Persentase ({label})"] = pct_correct
             df_results[f"Theta ({label})"] = np.round(theta_estimates, 4)
             df_results[f"SE ({label})"] = np.round(se_estimates, 4)
             df_results[f"Skor IRT ({label})"] = scaled_scores
