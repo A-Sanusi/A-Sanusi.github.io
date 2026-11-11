@@ -466,7 +466,7 @@ with tab_binsik:
         )
 
 with tab_postes:
-    st.header("Ekstrak Nilai Postes (coming soon)")
+    st.header("Ekstrak Nilai Postes")
 
     col_postes_1, col_postes_2 = st.columns(2)
     with col_postes_1:
