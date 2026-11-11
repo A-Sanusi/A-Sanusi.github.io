@@ -28,7 +28,7 @@ tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik, tab_post
     "🟣 Ekstrak Nilai TO UTBK (coming soon)",
     "🔴 Ekstrak Kehadiran",
     "🟣 Ekstrak Nilai Binsik",
-    "🔴 Ekstrak Nilai Postes (coming soon)",
+    "🔴 Ekstrak Nilai Postes",
 ])
 
 # 1. DATABASE TAB
