@@ -19,7 +19,7 @@ st.link_button(
     "https://a-sanusi.github.io/vibe_coding/vibe_coding.html"
 )
 
-st.title("Skoring IRT 3PL per Parameter / Subtes")
+st.title("IRT TKA")
 
 D = 1.702
 TARGET_MEAN = 500.0
