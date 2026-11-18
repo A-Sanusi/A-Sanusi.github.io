@@ -25,7 +25,7 @@ tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik, tab_post
     "🔴 Ekstrak Database",
     "🟣 Ekstrak Nilai TO TKA",
     "🔴 Ekstrak Nilai TO SKD (coming soon)",
-    "🟣 Ekstrak Nilai TO UTBK (coming soon)",
+    "🟣 Ekstrak Nilai TO UTBK",
     "🔴 Ekstrak Kehadiran",
     "🟣 Ekstrak Nilai Binsik",
     "🔴 Ekstrak Nilai Postes",
@@ -61,7 +61,7 @@ with tab_to_tka:
     col_to_tka_1, col_to_tka_2 = st.columns(2)
     with col_to_tka_1:
         uploaded_siswa = st.file_uploader(
-            "Upload File Excel Nama Siswa",
+            "Upload Excel Nama Siswa",
             type=["xlsx", "xls", "xlsm"],
             key="uploader_to_siswa",
         )
@@ -187,7 +187,7 @@ with tab_to_utbk:
     col_to_utbk_1, col_to_utbk_2 = st.columns(2)
     with col_to_utbk_1:
         uploaded_siswa_utbk = st.file_uploader(
-            "Upload File Excel Nama Siswa",
+            "Upload Excel Nama Siswa",
             type=["xlsx", "xls", "xlsm"],
             key="uploader_to_siswa_utbk",
         )
@@ -305,7 +305,7 @@ with tab_to_utbk:
 with tab_kehadiran:
     st.header("Ekstrak Kehadiran")
     uploaded_siswa_2 = st.file_uploader(
-        "Upload File Excel Nama Siswa",
+        "Upload Excel Nama Siswa",
         type=["xlsx", "xls", "xlsm"],
         key="uploader_kehadiran_siswa",
     )
@@ -471,7 +471,7 @@ with tab_postes:
     col_postes_1, col_postes_2 = st.columns(2)
     with col_postes_1:
         uploaded_siswa_postes = st.file_uploader(
-            "Upload File Excel Nama Siswa",
+            "Upload Excel Nama Siswa",
             type=["xlsx", "xls", "xlsm"],
             key="uploader_psikotes_siswa",
         )
