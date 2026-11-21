@@ -14,6 +14,7 @@ from fungsi.nilai_to import (
     process_to_tka,
     process_to_utbk,
     process_postes,
+    process_to_skd,
 )
 
 st.set_page_config(page_title="Ekstrak Data", layout="wide")
@@ -24,7 +25,7 @@ st.title("Ekstrak Data")
 tab_db, tab_to_tka, tab_to_skd, tab_to_utbk, tab_kehadiran, tab_binsik, tab_postes = st.tabs([
     "🔴 Ekstrak Database",
     "🟣 Ekstrak Nilai TO TKA",
-    "🔴 Ekstrak Nilai TO SKD (coming soon)",
+    "🔴 Ekstrak Nilai TO SKD",
     "🟣 Ekstrak Nilai TO UTBK",
     "🔴 Ekstrak Kehadiran",
     "🟣 Ekstrak Nilai Binsik",
@@ -178,7 +179,123 @@ with tab_to_tka:
 # 3. TO SKD TAB
 with tab_to_skd:
     st.header("Ekstrak Nilai SKD")
-    st.info("Coming Soon")
+
+    col_to_skd_1, col_to_skd_2 = st.columns(2)
+    with col_to_skd_1:
+        uploaded_siswa_skd = st.file_uploader(
+            "Upload Excel Nama Siswa",
+            type=["xlsx", "xls", "xlsm"],
+            key="uploader_to_siswa_skd",
+        )
+    with col_to_skd_2:
+        uploaded_to_skd = st.file_uploader(
+            "Upload File Try Out",
+            type=["xlsx", "xls", "xlsm"],
+            key="uploader_to_data_skd",
+        )
+
+    if uploaded_siswa_skd is None or uploaded_to_skd is None:
+        st.info("Silakan upload kedua file Excel untuk melanjutkan.")
+    else:
+        excel_siswa_skd = pd.ExcelFile(uploaded_siswa_skd)
+        excel_to_skd = pd.ExcelFile(uploaded_to_skd)
+
+        selected_sheet_siswa_skd = st.selectbox(
+            "Pilih Sheet Nama Siswa:",
+            excel_siswa_skd.sheet_names,
+            key="sheet_siswa_select_skd",
+        )
+
+        st.subheader("Pilih Sheet Subtes Try Out")
+        target_subtests_skd = st.multiselect(
+            "Pilih Subtes yang Ingin Diekstrak:",
+            options=excel_to_skd.sheet_names,
+            default=excel_to_skd.sheet_names[: min(0, len(excel_to_skd.sheet_names))],
+            key="multiselect_subtests_skd",
+        )
+
+        if not target_subtests_skd:
+            st.warning("Pilih minimal 1 subtes.")
+        else:
+            df_hasil_skd = process_to_skd(
+                uploaded_siswa_skd, uploaded_to_skd, selected_sheet_siswa_skd, target_subtests_skd
+            )
+
+            st.subheader("Tabel Nilai Siswa")
+            st.dataframe(df_hasil_skd, use_container_width=True)
+
+            excel_bytes_to_skd = convert_df_to_excel(
+                df_hasil_skd, sheet_name="Hasil Nilai TO"
+            )
+            st.download_button(
+                label="Download Hasil Nilai",
+                data=excel_bytes_to_skd,
+                file_name="Hasil_Nilai_Try_Out_skd.xlsx",
+                key="download_to_skd",
+            )
+
+            st.divider()
+
+            st.subheader("Rata-Rata Nilai per Kelas")
+
+            score_cols_skd = [
+                col for col in df_hasil_skd.columns if col.startswith("NILAI")
+            ]
+
+            kelas_col_skd = next(
+                (
+                    c
+                    for c in ["KELAS (DI PRIORITY)"]
+                    if c in df_hasil_skd.columns
+                ),
+                None,
+            )
+
+            if score_cols_skd and kelas_col_skd:
+                df_calc_skd = df_hasil_skd.copy()
+
+                for col in score_cols_skd:
+                    df_calc_skd[col] = pd.to_numeric(df_calc_skd[col], errors="coerce")
+
+                df_avg_kelas_skd = (
+                    df_calc_skd.groupby(kelas_col_skd)[score_cols_skd].mean().round(2).reset_index()
+                )
+                df_avg_kelas_skd.index = range(1, len(df_avg_kelas_skd) + 1)
+                df_avg_kelas_skd.index.name = "No"
+
+                st.dataframe(df_avg_kelas_skd, use_container_width=True)
+
+                fig_skd = px.bar(
+                    df_avg_kelas_skd,
+                    x=kelas_col_skd,
+                    y=score_cols_skd,
+                    barmode="group",
+                    title="Rata-Rata Nilai Try Out per Kelas",
+                    labels={
+                        kelas_col_skd: "Kelas",
+                        "value": "Nilai Rata-Rata",
+                        "variable": "Subtes TO",
+                    },
+                    text_auto=".2f",
+                )
+
+                fig_skd.update_layout(
+                    xaxis_title="Kelas",
+                    yaxis_title="Nilai Rata-Rata",
+                    margin=dict(l=20, r=20, t=50, b=20),
+                )
+
+                st.plotly_chart(fig_skd, use_container_width=True)
+
+                excel_bytes_avg_skd = convert_df_to_excel(
+                    df_avg_kelas_skd, sheet_name="Rata-Rata per Kelas"
+                )
+                st.download_button(
+                    label="Download Nilai Rata-Rata Kelas",
+                    data=excel_bytes_avg_skd,
+                    file_name="Rata_Rata_Nilai_Per_Kelas.xlsx",
+                    key="download_avg_kelas_skd",
+                )
 
 # 4. TO UTBK TAB
 with tab_to_utbk:
@@ -243,7 +360,7 @@ with tab_to_utbk:
             st.subheader("Rata-Rata Nilai per Kelas")
 
             score_cols_utbk = [
-                col for col in df_hasil_utbk.columns if col.startswith("Nilai ")
+                col for col in df_hasil_utbk.columns if col.startswith("NILAI")
             ]
 
             kelas_col_utbk = next(
@@ -296,9 +413,9 @@ with tab_to_utbk:
                 )
                 st.download_button(
                     label="Download Nilai Rata-Rata Kelas",
-                    data=excel_bytes_avg,
+                    data=excel_bytes_avg_utbk,
                     file_name="Rata_Rata_Nilai_Per_Kelas.xlsx",
-                    key="download_avg_kelas",
+                    key="download_avg_kelas_utbk",
                 )
 
 # 5. KEHADIRAN TAB
@@ -476,17 +593,27 @@ with tab_postes:
             key="uploader_psikotes_siswa",
         )
     with col_postes_2:
-        uploaded_postes = st.file_uploader(
-            "Upload File Postes",
+        # 1. Enable multiple file uploads
+        uploaded_postes_list = st.file_uploader(
+            "Upload File Postes (Bisa Lebih dari 1 File)",
             type=["xlsx", "xls", "xlsm"],
+            accept_multiple_files=True,
             key="uploader_postes_data",
         )
 
-    if uploaded_siswa_postes is None or uploaded_postes is None:
-        st.info("Silakan upload kedua file Excel untuk melanjutkan.")
+    # 2. Check if student file is None OR the list of postes files is empty
+    if uploaded_siswa_postes is None or not uploaded_postes_list:
+        st.info("Silakan upload file Nama Siswa dan minimal satu file Excel Postes untuk melanjutkan.")
     else:
         excel_siswa_postes = pd.ExcelFile(uploaded_siswa_postes)
-        excel_postes = pd.ExcelFile(uploaded_postes)
+        
+        # 3. Gather all unique sheet names across all uploaded Postes files
+        all_postes_sheets = []
+        for file_postes in uploaded_postes_list:
+            xl = pd.ExcelFile(file_postes)
+            for sheet in xl.sheet_names:
+                if sheet not in all_postes_sheets:
+                    all_postes_sheets.append(sheet)
 
         selected_sheet_siswa_postes = st.selectbox(
             "Pilih Sheet Nama Siswa:",
@@ -497,8 +624,8 @@ with tab_postes:
         st.subheader("Pilih Sheet Postes")
         target_subtests_postes = st.multiselect(
             "Pilih Subtes yang Ingin Diekstrak:",
-            options=excel_postes.sheet_names,
-            default=excel_postes.sheet_names[: min(0, len(excel_postes.sheet_names))],
+            options=all_postes_sheets,
+            default=[],
             key="multiselect_subtests_postes",
         )
 
@@ -506,7 +633,10 @@ with tab_postes:
             st.warning("Pilih minimal 1 subtes.")
         else:
             df_hasil_postes = process_postes(
-                uploaded_siswa_postes, uploaded_postes, selected_sheet_siswa_postes, target_subtests_postes
+                uploaded_siswa_postes,
+                uploaded_postes_list,
+                selected_sheet_siswa_postes,
+                target_subtests_postes,
             )
 
             st.subheader("Tabel Nilai Siswa")
@@ -546,7 +676,10 @@ with tab_postes:
                     df_calc_postes[col] = pd.to_numeric(df_calc_postes[col], errors="coerce")
 
                 df_avg_kelas_postes = (
-                    df_calc_postes.groupby(kelas_col_postes)[score_cols_postes].mean().round(2).reset_index()
+                    df_calc_postes.groupby(kelas_col_postes)[score_cols_postes]
+                    .mean()
+                    .round(2)
+                    .reset_index()
                 )
                 df_avg_kelas_postes.index = range(1, len(df_avg_kelas_postes) + 1)
                 df_avg_kelas_postes.index.name = "No"
